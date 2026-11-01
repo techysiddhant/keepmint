@@ -1,0 +1,24 @@
+{
+  "name": "keepmint",
+  "private": true,
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "db:generate": "pnpm --filter @keepmint/db generate",
+    "db:migrate": "pnpm --filter @keepmint/db migrate",
+    "db:seed": "pnpm --filter @keepmint/db seed",
+    "db:studio": "pnpm --filter @keepmint/db studio"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}

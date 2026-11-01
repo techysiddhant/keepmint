@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens — Pop (light) and Graphite (dark), from the design canvas. */
+:root {
+  --bg: #f1eeff;
+  --surface: #ffffff;
+  --surface-2: #e7e2ff;
+  --ink: #111111;
+  --border: #111111;
+  --muted: #45405c;
+  --shadow: #111111;
+  --line: #cfc8ee;
+  --err-ink: #b0172f;
+  --fail-soft: #ffe8ec;
+  --accent-ink: #5536e0;
+  --up-ink: #0b6b42;
+  --series: #6a4cf5;
+  --series-soft: #b7a9fa;
+}
+
+.dark {
+  --bg: #1b1b1e;
+  --surface: #252529;
+  --surface-2: #303035;
+  --ink: #ededef;
+  --border: #70707a;
+  --muted: #a9a9b2;
+  --shadow: #0e0e10;
+  --line: #38383e;
+  --err-ink: #ff9db0;
+  --fail-soft: #3a1a22;
+  --accent-ink: #b3a4ff;
+  --up-ink: #7fe0ae;
+  --series: #8a72ff;
+  --series-soft: #4a4558;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-shadow: var(--shadow);
+  --color-line: var(--line);
+  --color-err-ink: var(--err-ink);
+  --color-fail-soft: var(--fail-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-up-ink: var(--up-ink);
+  --color-series: var(--series);
+  --color-series-soft: var(--series-soft);
+
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-dm-sans), sans-serif;
+}
+
+@theme {
+  /* Sticker colours — the same in light and dark. */
+  --color-violet: #6a4cf5;
+  --color-mint: #3ddc97;
+  --color-yellow: #ffd43b;
+  --color-pink: #ff8fb1;
+  --color-sky: #7fd6ff;
+  --color-lilac: #c9bcff;
+  --color-sticker-ink: #111111;
+
+  /* Breakpoints from the design: phone ≤ 600, tablet ≤ 1100. */
+  --breakpoint-tablet: 37.5625rem;
+  --breakpoint-desktop: 68.8125rem;
+
+  --shadow-hard: 3px 3px 0 var(--shadow);
+  --shadow-hard-lg: 5px 5px 0 var(--shadow);
+  --shadow-card: 4px 4px 0 var(--shadow);
+  --shadow-focus: 4px 4px 0 #6a4cf5;
+
+  --ease-pop: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-pop: pop 0.3s var(--ease-pop) both;
+  --animate-sheet: sheet 0.32s var(--ease-pop) both;
+  --animate-fade: fade 0.2s ease both;
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.96) translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes sheet {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 3px solid #6a4cf5;
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every other rule */
+    animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every other rule */
+    transition: none !important;
+  }
+}

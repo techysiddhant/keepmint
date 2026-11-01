@@ -1,0 +1,25 @@
+{
+  "name": "@keepmint/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc",
+    "ping": "tsx src/scripts/ping.ts"
+  },
+  "dependencies": {
+    "@sentry/node": "11.10.0",
+    "@keepmint/core": "workspace:*",
+    "@keepmint/db": "workspace:*",
+    "dotenv": "18.0.9",
+    "pg-boss": "12.38.0",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3"
+  }
+}

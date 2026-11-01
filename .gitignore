@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+planning
+# builds
+.next/
+dist/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+.claude
+# env — never commit real secrets
+.env
+.env.*
+!.env.example
+
+# logs & os
+*.log
+.DS_Store
+
+# editors & local tools
+.claude/settings.local.json
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# sentry
+.sentryclirc
