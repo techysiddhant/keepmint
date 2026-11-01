@@ -3,7 +3,6 @@ import { z } from 'zod'
 // Server-only variables, validated on first use so a missing one fails loudly.
 const serverSchema = z.object({
   DATABASE_URL: z.string().url(),
-  SENTRY_DSN: z.string().optional(),
 })
 
 let cached: z.infer<typeof serverSchema> | undefined

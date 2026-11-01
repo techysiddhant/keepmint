@@ -4,9 +4,7 @@ import { createBoss } from './boss'
 import { env } from './env'
 import { handlePing, type PingData } from './jobs/ping'
 
-if (env.SENTRY_DSN) {
-  Sentry.init({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV, tracesSampleRate: 0.1 })
-}
+// Sentry is initialised in ./instrument.ts, loaded with --import before this file.
 
 const boss = createBoss()
 
