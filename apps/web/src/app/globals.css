@@ -1,60 +1,157 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens — Pop (light) and Graphite (dark), from the design canvas. */
+/*
+ * Design tokens. shadcn's semantic names carry the Pop (light) and Graphite (dark)
+ * palettes from the design canvas; the extra tokens below them are Keepmint-only.
+ */
 :root {
-  --bg: #f1eeff;
-  --surface: #ffffff;
-  --surface-2: #e7e2ff;
-  --ink: #111111;
+  --background: #f1eeff;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #6a4cf5;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #111111;
+  --muted: #e7e2ff;
+  --muted-foreground: #45405c;
+  --accent: #e7e2ff;
+  --accent-foreground: #111111;
+  --destructive: #c81e3a;
   --border: #111111;
-  --muted: #45405c;
+  --input: #111111;
+  --ring: #6a4cf5;
+  --radius: 0.75rem;
+  --chart-1: #6a4cf5;
+  --chart-2: #b7a9fa;
+  --chart-3: #3ddc97;
+  --chart-4: #ffd43b;
+  --chart-5: #ff8fb1;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #6a4cf5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e7e2ff;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #111111;
+  --sidebar-ring: #6a4cf5;
+
+  /* Keepmint extras */
   --shadow: #111111;
   --line: #cfc8ee;
+  --field: #ffffff;
   --err-ink: #b0172f;
   --fail-soft: #ffe8ec;
   --accent-ink: #5536e0;
   --up-ink: #0b6b42;
-  --series: #6a4cf5;
-  --series-soft: #b7a9fa;
+  --brand: #6a4cf5;
+  --brand-soft: #e6e0ff;
 }
 
 .dark {
-  --bg: #1b1b1e;
-  --surface: #252529;
-  --surface-2: #303035;
-  --ink: #ededef;
+  --background: #1b1b1e;
+  --foreground: #ededef;
+  --card: #252529;
+  --card-foreground: #ededef;
+  --popover: #252529;
+  --popover-foreground: #ededef;
+  --primary: #6a4cf5;
+  --primary-foreground: #ffffff;
+  --secondary: #252529;
+  --secondary-foreground: #ededef;
+  --muted: #303035;
+  --muted-foreground: #a9a9b2;
+  --accent: #303035;
+  --accent-foreground: #ededef;
+  --destructive: #ff8fa3;
   --border: #70707a;
-  --muted: #a9a9b2;
+  --input: #70707a;
+  --ring: #8a72ff;
+  --chart-1: #8a72ff;
+  --chart-2: #4a4558;
+  --chart-3: #3ddc97;
+  --chart-4: #ffd43b;
+  --chart-5: #ff8fb1;
+  --sidebar: #252529;
+  --sidebar-foreground: #ededef;
+  --sidebar-primary: #6a4cf5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #303035;
+  --sidebar-accent-foreground: #ededef;
+  --sidebar-border: #70707a;
+  --sidebar-ring: #8a72ff;
+
   --shadow: #0e0e10;
   --line: #38383e;
+  --field: #202024;
   --err-ink: #ff9db0;
   --fail-soft: #3a1a22;
   --accent-ink: #b3a4ff;
   --up-ink: #7fe0ae;
-  --series: #8a72ff;
-  --series-soft: #4a4558;
+  --brand: #2e2180;
+  --brand-soft: #d4ccff;
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-ink: var(--ink);
-  --color-border: var(--border);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   --color-shadow: var(--shadow);
   --color-line: var(--line);
+  --color-field: var(--field);
   --color-err-ink: var(--err-ink);
   --color-fail-soft: var(--fail-soft);
   --color-accent-ink: var(--accent-ink);
   --color-up-ink: var(--up-ink);
-  --color-series: var(--series);
-  --color-series-soft: var(--series-soft);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
 
   --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-heading: var(--font-unbounded), var(--font-dm-sans), sans-serif;
   --font-display: var(--font-unbounded), var(--font-dm-sans), sans-serif;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @theme {
@@ -71,9 +168,11 @@
   --breakpoint-tablet: 37.5625rem;
   --breakpoint-desktop: 68.8125rem;
 
+  /* Hard offset shadows — the Pop look. */
   --shadow-hard: 3px 3px 0 var(--shadow);
   --shadow-hard-lg: 5px 5px 0 var(--shadow);
   --shadow-card: 4px 4px 0 var(--shadow);
+  --shadow-pop: 6px 6px 0 var(--shadow);
   --shadow-focus: 4px 4px 0 #6a4cf5;
 
   --ease-pop: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -81,6 +180,12 @@
   --animate-pop: pop 0.3s var(--ease-pop) both;
   --animate-sheet: sheet 0.32s var(--ease-pop) both;
   --animate-fade: fade 0.2s ease both;
+  --animate-drop: drop 0.25s ease both;
+  --animate-shake: shake 0.4s ease;
+  --animate-floaty: floaty 4.5s ease-in-out infinite;
+  --animate-rise: rise 0.7s var(--ease-pop) both;
+  --animate-wob: wob 3.2s ease-in-out infinite;
+  --animate-marquee: marquee 32s linear infinite;
 
   @keyframes pop {
     0% {
@@ -100,6 +205,66 @@
       transform: none;
     }
   }
+  @keyframes drop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shake {
+    20% {
+      transform: translateX(-6px);
+    }
+    40% {
+      transform: translateX(6px);
+    }
+    60% {
+      transform: translateX(-4px);
+    }
+    80% {
+      transform: translateX(3px);
+    }
+  }
+  @keyframes floaty {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -8px;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes wob {
+    0%,
+    100% {
+      rotate: -3deg;
+    }
+    50% {
+      rotate: 1deg;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
   @keyframes fade {
     from {
       opacity: 0;
@@ -111,22 +276,56 @@
 }
 
 @layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
   html {
     color-scheme: light;
+    @apply font-sans;
   }
   html.dark {
     color-scheme: dark;
   }
   body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground;
     font-size: 15px;
     line-height: 1.5;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
   :focus-visible {
     outline: 3px solid #6a4cf5;
     outline-offset: 3px;
+  }
+}
+
+/* Hard-shadow hover lift used on cards across the landing page. */
+@utility lift {
+  transition:
+    transform 0.22s var(--ease-pop),
+    box-shadow 0.22s var(--ease-pop);
+  &:hover {
+    transform: translate(-3px, -4px);
+    box-shadow: 9px 9px 0 var(--shadow);
+  }
+}
+
+/* Pressable hard-shadow surface: lifts on hover, sinks on press. */
+@utility press {
+  box-shadow: 3px 3px 0 var(--shadow);
+  transition:
+    transform 0.16s var(--ease-pop),
+    box-shadow 0.16s var(--ease-pop),
+    background-color 0.16s;
+  &:hover:not(:disabled, [data-disabled]) {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--shadow);
+  }
+  &:active:not(:disabled, [data-disabled]) {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 var(--shadow);
   }
 }
 

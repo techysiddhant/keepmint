@@ -5,18 +5,22 @@ import {
   FolderIcon,
   HomeIcon,
   LibraryIcon,
+  LogOutIcon,
   PlusIcon,
   SettingsIcon,
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import type { ReactNode } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { type ReactNode, useEffect } from 'react'
 import { toast } from 'sonner'
 import { LogoMark } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { authClient } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
+
+export type ShellUser = { name: string; email: string; role: string; timezone: string }
 
 const NAV = [
   { label: 'Dashboard', short: 'Home', href: '/app', icon: HomeIcon },
@@ -34,15 +38,28 @@ function useIsActive() {
 const openAddLink = () => toast('Adding links arrives in Phase 2')
 
 /** Desktop sidebar (≥1101px), tablet icon rail (601–1100px), phone top bar + bottom tabs. */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   const isActive = useIsActive()
+  const router = useRouter()
+
+  // Keep "today" (the daily AI limit) in the time zone the user is actually in.
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (tz && tz !== user.timezone) void authClient.updateUser({ timezone: tz })
+  }, [user.timezone])
+
+  async function logOut() {
+    await authClient.signOut()
+    router.replace('/login')
+    router.refresh()
+  }
 
   return (
     <div className="flex min-h-dvh flex-col tablet:flex-row">
       {/* Desktop sidebar */}
       <aside
         aria-label="Main navigation"
-        className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col gap-5 border-r-2 border-border bg-surface px-4 py-[22px] desktop:flex"
+        className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col gap-5 border-r-2 border-border bg-card px-4 py-[22px] desktop:flex"
       >
         <Link
           href="/app"
@@ -65,8 +82,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               href={href}
               aria-current={isActive(href) ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 font-bold transition-colors hover:bg-surface-2',
-                isActive(href) && 'border-ink bg-surface-2',
+                'flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 font-bold transition-colors hover:bg-muted',
+                isActive(href) && 'border-foreground bg-muted',
               )}
             >
               <Icon className="size-[18px]" aria-hidden strokeWidth={2.2} />
@@ -79,19 +96,29 @@ export function AppShell({ children }: { children: ReactNode }) {
             href="/app/settings"
             aria-current={isActive('/app/settings') ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 font-bold hover:bg-surface-2',
-              isActive('/app/settings') && 'border-ink bg-surface-2',
+              'flex items-center gap-3 rounded-xl border-2 border-transparent px-3 py-2.5 font-bold hover:bg-muted',
+              isActive('/app/settings') && 'border-foreground bg-muted',
             )}
           >
             <SettingsIcon className="size-[18px]" aria-hidden strokeWidth={2.2} />
             Settings
           </Link>
           <div className="flex items-center gap-2.5 rounded-xl p-2">
-            <Avatar />
-            <span className="flex flex-col leading-tight">
-              <strong>Siddhant</strong>
-              <span className="text-[13px] text-muted">Beta</span>
+            <Avatar name={user.name} />
+            <span className="flex min-w-0 flex-1 flex-col leading-tight">
+              <strong className="truncate">{user.name}</strong>
+              <span className="text-[13px] text-muted-foreground">Beta</span>
             </span>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button variant="ghost" size="icon" aria-label="Log out" onClick={logOut} />
+                }
+              >
+                <LogOutIcon aria-hidden />
+              </TooltipTrigger>
+              <TooltipContent>Log out</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </aside>
@@ -99,7 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Tablet icon rail */}
       <aside
         aria-label="Main navigation"
-        className="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-center gap-3 border-r-2 border-border bg-surface px-3 py-[18px] tablet:flex desktop:hidden"
+        className="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-center gap-3 border-r-2 border-border bg-card px-3 py-[18px] tablet:flex desktop:hidden"
       >
         <Link href="/app" aria-label="Keepmint home">
           <LogoMark className="size-10 rounded-[11px]" />
@@ -117,19 +144,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           { label: 'Settings', short: 'Settings', href: '/app/settings', icon: SettingsIcon },
         ].map(({ label, href, icon: Icon }) => (
           <Tooltip key={href}>
-            <TooltipTrigger asChild>
-              <Link
-                href={href}
-                aria-label={label}
-                aria-current={isActive(href) ? 'page' : undefined}
-                className={cn(
-                  'flex size-12 items-center justify-center rounded-xl border-2 border-transparent hover:bg-surface-2',
-                  isActive(href) && 'border-ink bg-surface-2',
-                  href === '/app/settings' && 'mt-auto',
-                )}
-              >
-                <Icon className="size-5" aria-hidden strokeWidth={2.2} />
-              </Link>
+            <TooltipTrigger
+              render={
+                <Link
+                  href={href}
+                  aria-label={label}
+                  aria-current={isActive(href) ? 'page' : undefined}
+                  className={cn(
+                    'flex size-12 items-center justify-center rounded-xl border-2 border-transparent hover:bg-muted',
+                    isActive(href) && 'border-foreground bg-muted',
+                    href === '/app/settings' && 'mt-auto',
+                  )}
+                />
+              }
+            >
+              <Icon className="size-5" aria-hidden strokeWidth={2.2} />
             </TooltipTrigger>
             <TooltipContent side="right">{label}</TooltipContent>
           </Tooltip>
@@ -138,7 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center gap-2.5 border-b-2 border-border bg-surface px-4 py-3 tablet:px-6">
+        <header className="sticky top-0 z-10 flex items-center gap-2.5 border-b-2 border-border bg-card px-4 py-3 tablet:px-6">
           <Link
             href="/app"
             className="flex flex-1 items-center gap-2 font-display text-[19px] font-extrabold tablet:hidden"
@@ -149,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="hidden flex-1 tablet:block" />
           <ThemeToggle />
           <Link href="/app/settings" aria-label="Settings and profile" className="tablet:hidden">
-            <Avatar />
+            <Avatar name={user.name} />
           </Link>
         </header>
 
@@ -160,7 +189,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Phone bottom tabs */}
         <nav
           aria-label="Main"
-          className="fixed inset-x-0 bottom-0 z-10 flex items-end justify-around border-t-2 border-border bg-surface px-1.5 pt-1.5 pb-3.5 tablet:hidden"
+          className="fixed inset-x-0 bottom-0 z-10 flex items-end justify-around border-t-2 border-border bg-card px-1.5 pt-1.5 pb-3.5 tablet:hidden"
         >
           {NAV.slice(0, 2).map((item) => (
             <TabLink key={item.href} {...item} active={isActive(item.href)} />
@@ -189,13 +218,13 @@ function TabLink({ short, href, icon: Icon, active }: (typeof NAV)[number] & { a
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex flex-1 flex-col items-center gap-0.5 text-[11px] font-bold',
-        active ? 'text-ink' : 'text-muted',
+        active ? 'text-foreground' : 'text-muted-foreground',
       )}
     >
       <span
         className={cn(
           'flex h-[30px] w-10 items-center justify-center rounded-[10px]',
-          active && 'bg-surface-2',
+          active && 'bg-muted',
         )}
       >
         <Icon className="size-5" aria-hidden strokeWidth={2.3} />
@@ -205,13 +234,13 @@ function TabLink({ short, href, icon: Icon, active }: (typeof NAV)[number] & { a
   )
 }
 
-function Avatar() {
+function Avatar({ name }: { name: string }) {
   return (
     <span
       aria-hidden
-      className="flex size-9 items-center justify-center rounded-full border-2 border-border bg-pink font-bold text-sticker-ink"
+      className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-border bg-pink font-bold text-sticker-ink"
     >
-      S
+      {name.trim().charAt(0).toUpperCase() || '?'}
     </span>
   )
 }

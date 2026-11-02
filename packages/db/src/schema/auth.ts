@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm'
-import { boolean, index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core'
 import { importAccess, userRole } from './enums'
 
 // Better Auth core tables (+ admin plugin fields). Property names must match
@@ -33,6 +42,12 @@ export const user = pgTable('user', {
     .notNull()
     .default(sql`'{}'::jsonb`),
   lastActiveAt: timestamp({ withTimezone: true }),
+  // Consent to the Terms and Privacy Policy (DPDP Act): set by the server at sign-up.
+  termsAcceptedAt: timestamp({ withTimezone: true }),
+  termsVersion: text(),
+  // Soft delete: set when the account is closed. Rows are never hard-deleted (a trigger
+  // blocks it); a deleted user can't log in and their data stays for records.
+  deletedAt: timestamp({ withTimezone: true }),
 })
 
 export const session = pgTable(
@@ -87,3 +102,15 @@ export const verification = pgTable(
   },
   (t) => [index().on(t.identifier)],
 )
+
+/**
+ * Better Auth's request counters (one row per IP + endpoint), shared by every server
+ * instance. Holds no user data. Better Auth deletes rows whose window has passed; the
+ * founder approved that pruning on 2 Nov 2026 (it's the one automatic delete allowed).
+ */
+export const rateLimit = pgTable('rate_limit', {
+  id: text().primaryKey(),
+  key: text().notNull().unique(),
+  count: integer().notNull(),
+  lastRequest: bigint({ mode: 'number' }).notNull(),
+})

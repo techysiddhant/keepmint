@@ -1,17 +1,31 @@
-import { Switch as SwitchPrimitive } from 'radix-ui'
-import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
+'use client'
 
-export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.Root>) {
+import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
+import { cn } from 'cn'
+
+function Switch({
+  className,
+  size = 'default',
+  ...props
+}: SwitchPrimitive.Root.Props & {
+  size?: 'sm' | 'default'
+}) {
   return (
     <SwitchPrimitive.Root
+      data-slot="switch"
+      data-size={size}
       className={cn(
-        'inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-border bg-surface-2 p-0.5 transition-colors data-[state=checked]:bg-violet disabled:cursor-not-allowed disabled:opacity-60',
+        'peer group/switch relative inline-flex shrink-0 items-center rounded-full border-2 border-border p-0.5 transition-colors outline-none after:absolute after:-inset-x-3 after:-inset-y-2 data-[size=default]:h-7 data-[size=default]:w-12 data-[size=sm]:h-5 data-[size=sm]:w-9 data-checked:bg-mint data-unchecked:bg-muted data-disabled:cursor-not-allowed data-disabled:opacity-60',
         className,
       )}
       {...props}
     >
-      <SwitchPrimitive.Thumb className="block size-5 rounded-full border-2 border-border bg-surface transition-transform data-[state=checked]:translate-x-5" />
+      <SwitchPrimitive.Thumb
+        data-slot="switch-thumb"
+        className="pointer-events-none block rounded-full border-2 border-sticker-ink bg-white transition-transform duration-200 ease-pop group-data-[size=default]/switch:size-5 group-data-[size=sm]/switch:size-3.5 group-data-[size=default]/switch:data-checked:translate-x-5 group-data-[size=sm]/switch:data-checked:translate-x-4 data-unchecked:translate-x-0"
+      />
     </SwitchPrimitive.Root>
   )
 }
+
+export { Switch }

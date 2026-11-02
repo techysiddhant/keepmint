@@ -313,3 +313,26 @@ export const appSettings = pgTable('app_settings', {
   updatedBy: text().references(() => user.id, { onDelete: 'set null' }),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 })
+
+/**
+ * Every time a user agrees to the Terms and Privacy Policy (sign-up today, re-consent
+ * when LEGAL_VERSION changes later). Kept as proof of consent under India's DPDP Act:
+ * insert-only (a trigger rejects UPDATE and DELETE), and never removed with the account.
+ */
+export const consentEvents = pgTable(
+  'consent_events',
+  {
+    id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    // Deliberately no foreign key: if a user row is ever purged (e.g. an erasure request),
+    // their consent records stay, still identified by user_id and the email copy below.
+    userId: text().notNull(),
+    // Copy of the email at the time, so the record still identifies the person on its own.
+    email: text().notNull(),
+    kind: text().notNull().default('terms_and_privacy'),
+    version: text().notNull(),
+    acceptedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    ipAddress: text(),
+    userAgent: text(),
+  },
+  (t) => [index('consent_events_user_idx').on(t.userId, t.acceptedAt.desc())],
+)

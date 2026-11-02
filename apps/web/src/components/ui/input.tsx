@@ -1,14 +1,19 @@
-import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
+import { Input as InputPrimitive } from '@base-ui/react/input'
+import { cn } from 'cn'
+import type * as React from 'react'
 
-export function Input({ className, ...props }: ComponentProps<'input'>) {
+function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (
-    <input
+    <InputPrimitive
+      type={type}
+      data-slot="input"
       className={cn(
-        'h-12 w-full min-w-0 rounded-xl border-2 border-border bg-surface px-3.5 text-[15px] text-ink outline-none transition-[transform,box-shadow] duration-150 ease-pop placeholder:text-muted focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-focus aria-invalid:border-err-ink disabled:opacity-60',
+        'h-12 w-full min-w-0 rounded-xl border-2 border-input bg-field px-3.5 text-base text-foreground outline-none transition-[transform,box-shadow] duration-150 ease-pop placeholder:text-muted-foreground focus-visible:-translate-x-0.5 focus-visible:-translate-y-0.5 focus-visible:shadow-focus focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive',
         className,
       )}
       {...props}
     />
   )
 }
+
+export { Input }

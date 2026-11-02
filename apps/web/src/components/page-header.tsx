@@ -15,7 +15,7 @@ export function PageHeader({
         <h1 className="font-display text-[clamp(26px,4vw,34px)] leading-tight font-bold">
           {title}
         </h1>
-        {description && <p className="text-muted">{description}</p>}
+        {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       {children}
     </div>

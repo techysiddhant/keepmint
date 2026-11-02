@@ -6,6 +6,12 @@ export const DEFAULTS = {
   reviewConfidenceThreshold: 0.6,
 } as const
 
+/**
+ * Version of the Terms and Privacy Policy a user agrees to at sign-up (the pages'
+ * "Last updated" date). Bump it whenever either page changes in a way that needs new consent.
+ */
+export const LEGAL_VERSION = '2026-11-02'
+
 export const AI_MODEL = 'claude-haiku-5-5'
 
 /** USD per million tokens for AI_MODEL. Keep in sync with the provider's pricing page. */

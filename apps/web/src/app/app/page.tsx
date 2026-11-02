@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/page-header'
-import { Card } from '@/components/ui/card'
-import { Chip } from '@/components/ui/chip'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 
@@ -18,15 +18,21 @@ export default function DashboardPage() {
       <PageHeader title="Good afternoon" description="Here's your library at a glance" />
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-4 desktop:grid-cols-4">
         {STATS.map((s) => (
-          <Card key={s.label} className="flex flex-col gap-1">
-            <span className="text-sm font-bold text-muted">{s.label}</span>
-            <span className="font-display text-3xl font-bold">{s.value}</span>
+          <Card key={s.label}>
+            <CardHeader>
+              <CardDescription className="font-bold">{s.label}</CardDescription>
+              <CardTitle className="font-display text-3xl">{s.value}</CardTitle>
+            </CardHeader>
           </Card>
         ))}
       </section>
-      <Card className="mt-6 flex flex-wrap items-center gap-3">
-        <Chip tone="violet">Phase 0</Chip>
-        <span className="text-muted">App shell only — saving links arrives in Phase 2.</span>
+      <Card className="mt-6">
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Badge>Phase 0</Badge>
+          <span className="text-muted-foreground">
+            App shell only — saving links arrives in Phase 2.
+          </span>
+        </CardContent>
       </Card>
     </>
   )

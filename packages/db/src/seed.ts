@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import { type LinkType, urlHash } from '@keepmint/core'
 import { config } from 'dotenv'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { createDb } from './client'
 import { collections, links, user } from './schema'
 
@@ -188,6 +188,9 @@ async function main() {
   const { db, pool } = createDb(url, { max: 1 })
   try {
     await db.transaction(async (tx) => {
+      // Users are never hard-deleted in the app (a trigger blocks it). The seed replaces its
+      // own demo user, so it opts in to a purge for this transaction only.
+      await tx.execute(sql`set local keepmint.allow_purge = 'on'`)
       await tx.delete(user).where(eq(user.email, DEMO_EMAIL))
 
       const userId = crypto.randomUUID()

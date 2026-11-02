@@ -1,44 +1,54 @@
+import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { Slot } from 'radix-ui'
-import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
 
+// Pop look: 2px ink border, hard offset shadow that lifts on hover and sinks on press.
 const buttonVariants = cva(
-  'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border-2 border-border font-bold transition-[transform,box-shadow,background] duration-150 ease-pop disabled:cursor-not-allowed disabled:opacity-60 [&_svg]:size-[18px] [&_svg]:shrink-0',
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 border-2 border-border font-bold whitespace-nowrap outline-none select-none disabled:pointer-events-none disabled:opacity-60 data-disabled:pointer-events-none data-disabled:opacity-60 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
-        primary:
-          'bg-violet text-white shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:translate-0 disabled:shadow-none',
-        secondary:
-          'bg-surface text-ink shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:translate-0 disabled:shadow-none',
-        sticker:
-          'bg-yellow text-sticker-ink shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
-        ghost: 'border-transparent bg-transparent text-ink hover:bg-surface-2',
-        outline: 'bg-bg text-ink hover:bg-surface-2',
-        danger:
-          'bg-pink text-sticker-ink shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none',
+        default: 'press bg-primary text-primary-foreground',
+        secondary: 'press bg-secondary text-secondary-foreground',
+        sticker: 'press bg-yellow text-sticker-ink',
+        outline:
+          'bg-background text-foreground transition-colors hover:bg-muted aria-expanded:bg-muted',
+        ghost:
+          'border-transparent bg-transparent text-foreground transition-colors hover:bg-muted aria-expanded:bg-muted',
+        destructive: 'press bg-pink text-sticker-ink',
+        // `px-0!` so the size variant's padding can't push the text away from its underline.
+        link: 'border-transparent px-0! text-foreground underline decoration-2 underline-offset-[3px] hover:decoration-primary',
       },
       size: {
-        sm: 'h-9 rounded-[10px] px-3 text-sm',
-        md: 'h-11 rounded-xl px-4 text-[15px]',
+        default: 'h-11 rounded-xl px-4 text-[15px]',
+        sm: "h-9 gap-1.5 rounded-[10px] px-3 text-sm [&_svg:not([class*='size-'])]:size-4",
         lg: 'h-[50px] rounded-[14px] px-5 text-base',
+        xl: 'h-14 rounded-[14px] px-6 text-[17px]',
         icon: 'size-10 rounded-xl',
+        'icon-sm': "size-8 rounded-[9px] [&_svg:not([class*='size-'])]:size-4",
+        'icon-lg': 'size-12 rounded-[14px]',
       },
     },
-    defaultVariants: { variant: 'primary', size: 'md' },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
   },
 )
 
-export function Button({
+function Button({
   className,
-  variant,
-  size,
-  asChild = false,
+  variant = 'default',
+  size = 'default',
   ...props
-}: ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : 'button'
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
 }
 
-export { buttonVariants }
+export { Button, buttonVariants }
