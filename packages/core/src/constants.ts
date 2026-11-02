@@ -62,3 +62,10 @@ export const QUEUES = {
   processImport: 'process-import',
   ping: 'ping',
 } as const
+
+/** "Try a sample link" in the Add link dialog and the first-run screen. */
+export const SAMPLE_LINKS = [
+  { label: 'A YouTube video', url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' },
+  { label: 'An article', url: 'https://paulgraham.com/greatwork.html' },
+  { label: 'A GitHub repo', url: 'https://github.com/shadcn-ui/ui' },
+] as const

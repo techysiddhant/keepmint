@@ -7,7 +7,7 @@ config({ path: resolve(import.meta.dirname, '../../.env'), quiet: true })
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@keepmint/core', '@keepmint/db', '@keepmint/email'],
-  serverExternalPackages: ['pg'],
+  serverExternalPackages: ['pg', 'pg-boss'],
   // Keep the dev badge off the sidebar's bottom-left Settings button.
   devIndicators: { position: 'bottom-right' },
   poweredByHeader: false,

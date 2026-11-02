@@ -1,0 +1,38 @@
+[
+  { "kind": "article", "url": "https://paulgraham.com/greatwork.html" },
+  { "kind": "article", "url": "https://martinfowler.com/articles/microservices.html" },
+  {
+    "kind": "article",
+    "url": "https://www.joelonsoftware.com/2000/08/09/the-joel-test-12-steps-to-better-code/"
+  },
+  { "kind": "article", "url": "https://danluu.com/look-stupid/" },
+  { "kind": "article", "url": "https://simonwillison.net/2024/Dec/31/llms-in-2024/" },
+  { "kind": "article", "url": "https://en.wikipedia.org/wiki/Sourdough" },
+  { "kind": "article", "url": "https://www.nasa.gov/humans-in-space/" },
+  { "kind": "article", "url": "https://web.dev/articles/vitals" },
+  { "kind": "article", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching" },
+  { "kind": "article", "url": "https://blog.cloudflare.com/the-road-to-quic/" },
+  { "kind": "video", "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw" },
+  { "kind": "video", "url": "https://www.youtube.com/watch?v=arj7oStGLkU" },
+  { "kind": "video", "url": "https://youtu.be/8aGhZQkoFbQ" },
+  { "kind": "video", "url": "https://vimeo.com/76979871" },
+  { "kind": "repo", "url": "https://github.com/shadcn-ui/ui" },
+  { "kind": "repo", "url": "https://github.com/drizzle-team/drizzle-orm" },
+  { "kind": "repo", "url": "https://github.com/timgit/pg-boss" },
+  { "kind": "repo", "url": "https://github.com/mozilla/readability" },
+  { "kind": "thread", "url": "https://x.com/jack/status/20" },
+  { "kind": "thread", "url": "https://bsky.app/profile/bsky.app" },
+  { "kind": "recipe", "url": "https://www.bbcgoodfood.com/recipes/easy-pancakes" },
+  {
+    "kind": "recipe",
+    "url": "https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/"
+  },
+  { "kind": "product", "url": "https://www.raspberrypi.com/products/raspberry-pi-5/" },
+  { "kind": "job", "url": "https://www.ycombinator.com/jobs" },
+  { "kind": "podcast", "url": "https://www.thisamericanlife.org/1/new-beginnings" },
+  { "kind": "pdf", "url": "https://arxiv.org/pdf/1706.03762" },
+  { "kind": "paywall", "url": "https://www.nytimes.com/section/technology" },
+  { "kind": "paywall", "url": "https://www.ft.com/technology" },
+  { "kind": "404", "url": "https://example.com/this-page-does-not-exist" },
+  { "kind": "404", "url": "https://github.com/keepmint-nonexistent-user/nope" }
+]

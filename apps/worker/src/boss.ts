@@ -1,5 +1,6 @@
 import { PgBoss } from 'pg-boss'
 import { env } from './env'
+import { log } from './logger'
 
 /**
  * `worker` runs supervision, cron and schema migration. `producer` only sends jobs
@@ -15,6 +16,6 @@ export function createBoss(role: 'worker' | 'producer' = 'worker') {
     schedule: !producer,
     migrate: !producer,
   })
-  boss.on('error', (err) => console.error('[pg-boss]', err))
+  boss.on('error', (err) => log.error({ err }, 'pg-boss error'))
   return boss
 }

@@ -12,7 +12,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { type ReactNode, useEffect } from 'react'
-import { toast } from 'sonner'
+import { useAddLink } from '@/components/library/add-link'
 import { LogoMark } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -34,13 +34,11 @@ function useIsActive() {
   return (href: string) => (href === '/app' ? pathname === '/app' : pathname.startsWith(href))
 }
 
-// Saving arrives in Phase 2.
-const openAddLink = () => toast('Adding links arrives in Phase 2')
-
 /** Desktop sidebar (≥1101px), tablet icon rail (601–1100px), phone top bar + bottom tabs. */
 export function AppShell({ user, children }: { user: ShellUser; children: ReactNode }) {
   const isActive = useIsActive()
   const router = useRouter()
+  const { open: openAddLink } = useAddLink()
 
   // Keep "today" (the daily AI limit) in the time zone the user is actually in.
   useEffect(() => {
@@ -68,7 +66,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
           <LogoMark />
           keepmint
         </Link>
-        <Button size="lg" className="justify-start" onClick={openAddLink}>
+        <Button size="lg" className="justify-start" onClick={() => openAddLink()}>
           <PlusIcon aria-hidden strokeWidth={2.8} />
           <span className="flex-1 text-left">Add link</span>
           <kbd className="rounded-md border-[1.5px] border-white/60 px-1.5 text-xs font-bold">
@@ -135,7 +133,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
           size="icon"
           className="my-1.5 size-[50px] rounded-[14px]"
           aria-label="Add link"
-          onClick={openAddLink}
+          onClick={() => openAddLink()}
         >
           <PlusIcon aria-hidden strokeWidth={2.8} />
         </Button>
@@ -198,7 +196,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
             size="icon"
             aria-label="Add link"
             className="-mt-[26px] size-14 rounded-[18px]"
-            onClick={openAddLink}
+            onClick={() => openAddLink()}
           >
             <PlusIcon className="!size-6" aria-hidden strokeWidth={2.8} />
           </Button>

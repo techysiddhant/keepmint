@@ -59,8 +59,9 @@ function LoginForm({ next }: { next: string }) {
         email: value.email.trim(),
         password: value.password,
         rememberMe: value.remember,
-        // An unverified user gets a fresh verification email on sign-in; its link lands here.
-        callbackURL: '/verified',
+        // Better Auth redirects here after a successful sign-in, and an unverified user's
+        // fresh verification email links here too.
+        callbackURL: next,
       })
       if (error) return setFormError(authErrorMessage(error))
       // Keep "today" in the user's own time zone for the daily AI limit.
