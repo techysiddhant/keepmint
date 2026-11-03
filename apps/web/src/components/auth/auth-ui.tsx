@@ -8,7 +8,7 @@ export function AuthCard({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'animate-pop rounded-3xl border-2 border-border bg-card p-6 shadow-[6px_6px_0_var(--shadow)] tablet:p-8',
+        'animate-pop rounded-3xl border-2 border-border bg-card p-6 shadow-pop tablet:p-8',
         className,
       )}
       {...props}
@@ -18,7 +18,7 @@ export function AuthCard({ className, ...props }: ComponentProps<'div'>) {
 
 export function AuthHeading({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="mb-[22px] flex flex-col gap-1.5">
+    <div className="mb-5.5 flex flex-col gap-1.5">
       <h1 className="font-display text-[clamp(26px,3vw,32px)] leading-[1.1] font-extrabold tracking-[-0.03em]">
         {title}
       </h1>
@@ -31,9 +31,9 @@ export function FormAlert({ children }: { children: ReactNode }) {
   return (
     <div
       role="alert"
-      className="mb-[18px] flex animate-drop items-start gap-2.5 rounded-xl border-2 border-destructive bg-fail-soft px-3.5 py-3 text-sm font-semibold text-err-ink"
+      className="mb-4.5 flex animate-drop items-start gap-2.5 rounded-xl border-2 border-destructive bg-fail-soft px-3.5 py-3 text-sm font-semibold text-err-ink"
     >
-      <AlertCircleIcon className="mt-0.5 size-[18px] shrink-0" aria-hidden />
+      <AlertCircleIcon className="mt-0.5 size-4.5 shrink-0" aria-hidden />
       <span>{children}</span>
     </div>
   )
@@ -66,15 +66,15 @@ export function SuccessCard({
   return (
     <div
       role="status"
-      className="relative flex animate-pop flex-col gap-4 overflow-hidden rounded-3xl border-2 border-border bg-mint p-6 text-sticker-ink shadow-[6px_6px_0_var(--shadow)] tablet:p-8"
+      className="relative flex animate-pop flex-col gap-4 overflow-hidden rounded-3xl border-2 border-border bg-mint p-6 text-sticker-ink shadow-pop tablet:p-8"
     >
       <span
         aria-hidden
-        className="absolute top-[18px] right-[22px] size-[34px] animate-floaty rounded-[10px] border-2 border-sticker-ink bg-yellow"
+        className="absolute top-4.5 right-5.5 size-8.5 animate-floaty rounded-[10px] border-2 border-sticker-ink bg-yellow"
       />
       <span
         aria-hidden
-        className="absolute top-[70px] right-[70px] size-5 animate-floaty rounded-full border-2 border-sticker-ink bg-pink [animation-delay:1.2s]"
+        className="absolute top-17.5 right-17.5 size-5 animate-floaty rounded-full border-2 border-sticker-ink bg-pink [animation-delay:1.2s]"
       />
       <span className="flex size-16 items-center justify-center rounded-full border-2 border-sticker-ink bg-white">
         {icon}

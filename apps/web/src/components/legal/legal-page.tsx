@@ -18,7 +18,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
     <div className="min-h-dvh">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-5 py-5">
         <Link href="/" className="flex items-center gap-2 font-display text-xl font-extrabold">
-          <LogoMark className="size-[30px]" />
+          <LogoMark className="size-7.5" />
           keepmint
         </Link>
         <ThemeToggle />

@@ -12,8 +12,8 @@ import {
   SparklesIcon,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useLibrary } from '@/components/library/library-provider'
 import { LINK_TYPE_DISPLAY } from '@/components/library/link-display'
+import { useLibrary } from '@/components/library/use-library'
 import { Badge, linkTypeBadge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -67,7 +67,7 @@ export function FirstRun({
   const hasLinks = Object.keys(links).length > 0
 
   return (
-    <div className="mx-auto flex max-w-[1160px] flex-col gap-6">
+    <div className="mx-auto flex max-w-290 flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-[clamp(26px,4vw,34px)] leading-tight font-extrabold tracking-tight">
           Welcome to Keepmint{name ? `, ${name}` : ''}
@@ -85,7 +85,7 @@ export function FirstRun({
           >
             <span
               aria-hidden
-              className="absolute top-4 right-[18px] size-[30px] rotate-[14deg] rounded-[9px] border-2 border-sticker-ink bg-pink"
+              className="absolute top-4 right-4.5 size-7.5 rotate-14 rounded-[9px] border-2 border-sticker-ink bg-pink"
             />
             <div className="flex items-center gap-2.5">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-sticker-ink bg-yellow text-[13px] font-extrabold text-sticker-ink">
@@ -120,7 +120,7 @@ export function FirstRun({
                   <span
                     aria-hidden
                     className={cn(
-                      'flex h-14 w-[72px] shrink-0 items-center justify-center rounded-xl border-2 border-sticker-ink text-sticker-ink',
+                      'flex h-14 w-18 shrink-0 items-center justify-center rounded-xl border-2 border-sticker-ink text-sticker-ink',
                       LINK_TYPE_DISPLAY[link.type].bg,
                     )}
                   >
@@ -218,7 +218,7 @@ export function FirstRun({
           {usage && (
             <section
               aria-labelledby="ai-h"
-              className="flex flex-col gap-2.5 rounded-[20px] border-2 border-border bg-card p-[18px]"
+              className="flex flex-col gap-2.5 rounded-[20px] border-2 border-border bg-card p-4.5"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <h2 id="ai-h" className="text-[15px] font-bold">
@@ -240,7 +240,7 @@ export function FirstRun({
           )}
           <section
             aria-labelledby="how-h"
-            className="flex flex-col gap-3 rounded-[20px] border-2 border-border bg-card p-[18px]"
+            className="flex flex-col gap-3 rounded-[20px] border-2 border-border bg-card p-4.5"
           >
             <h2 id="how-h" className="text-[15px] font-bold">
               How Keepmint works
@@ -255,7 +255,7 @@ export function FirstRun({
                     rot,
                   )}
                 >
-                  <Icon className="size-[17px]" strokeWidth={2.3} />
+                  <Icon className="size-4.25" strokeWidth={2.3} />
                 </span>
                 <span className="flex flex-col leading-snug">
                   <strong>{title}</strong>
@@ -300,7 +300,7 @@ function FirstLinkForm({ onSaved }: { onSaved: (id: string) => void }) {
                 Link to save
               </FieldLabel>
               <div className="flex flex-wrap gap-2.5">
-                <InputGroup className="h-[54px] min-w-0 flex-[1_1_240px]">
+                <InputGroup className="h-13.5 min-w-0 flex-[1_1_240px]">
                   <InputGroupInput
                     id="first-url"
                     type="url"
@@ -323,7 +323,7 @@ function FirstLinkForm({ onSaved }: { onSaved: (id: string) => void }) {
                       type="submit"
                       size="lg"
                       disabled={busy}
-                      className="h-[54px] flex-[1_1_auto] tablet:flex-none"
+                      className="h-13.5 flex-[1_1_auto] tablet:flex-none"
                     >
                       {busy ? 'Saving…' : 'Save link'}
                     </Button>
@@ -383,9 +383,9 @@ function Steps({ status, site }: { status: LinkStatus; site: string }) {
           >
             <span
               aria-hidden
-              className="flex size-[26px] shrink-0 items-center justify-center rounded-full border-2 border-current"
+              className="flex size-6.5 shrink-0 items-center justify-center rounded-full border-2 border-current"
             >
-              {state === 'done' && <CheckIcon className="size-[13px]" strokeWidth={4} />}
+              {state === 'done' && <CheckIcon className="size-3.25" strokeWidth={4} />}
               {state === 'now' && (
                 <LoaderCircleIcon className="size-3.5 animate-spin" strokeWidth={3} />
               )}

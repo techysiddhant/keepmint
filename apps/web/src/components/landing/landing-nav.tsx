@@ -23,10 +23,10 @@ export function LandingNav() {
     <header className="sticky top-0 z-20 bg-background px-3 pt-2.5 tablet:px-5 tablet:pt-3.5">
       <nav
         aria-label="Main"
-        className="mx-auto flex max-w-[1240px] items-center gap-2 rounded-[18px] border-2 border-border bg-card py-1.5 pr-1.5 pl-3.5 shadow-[4px_4px_0_var(--shadow)] tablet:gap-3 tablet:py-2 tablet:pr-2 tablet:pl-[18px]"
+        className="mx-auto flex max-w-310 items-center gap-2 rounded-[18px] border-2 border-border bg-card py-1.5 pr-1.5 pl-3.5 shadow-card tablet:gap-3 tablet:py-2 tablet:pr-2 tablet:pl-4.5"
       >
         <Link href="/" className="flex items-center gap-2 font-display text-[21px] font-extrabold">
-          <LogoMark className="size-[30px]" />
+          <LogoMark className="size-7.5" />
           keepmint
         </Link>
         <div className="hidden flex-1 justify-center gap-7 font-medium min-[961px]:flex">
@@ -63,7 +63,7 @@ export function LandingNav() {
         </Button>
       </nav>
       {open && (
-        <div className="mx-auto mt-2.5 flex max-w-[1240px] animate-pop flex-col rounded-[18px] border-2 border-border bg-card p-2.5 text-lg font-bold shadow-[4px_4px_0_var(--shadow)] min-[961px]:hidden">
+        <div className="mx-auto mt-2.5 flex max-w-310 animate-pop flex-col rounded-[18px] border-2 border-border bg-card p-2.5 text-lg font-bold shadow-card min-[961px]:hidden">
           {LINKS.map(([label, href]) => (
             <a key={href} href={href} onClick={close} className="rounded-xl p-3.5 hover:bg-muted">
               {label}

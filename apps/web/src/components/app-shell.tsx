@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import {
   BookmarkIcon,
   FolderIcon,
@@ -39,6 +40,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
   const isActive = useIsActive()
   const router = useRouter()
   const { open: openAddLink } = useAddLink()
+  const queryClient = useQueryClient()
 
   // Keep "today" (the daily AI limit) in the time zone the user is actually in.
   useEffect(() => {
@@ -48,6 +50,8 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
 
   async function logOut() {
     await authClient.signOut()
+    // Drop every cached query (the library included) so nothing outlives the session.
+    queryClient.clear()
     router.replace('/login')
     router.refresh()
   }
@@ -57,7 +61,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
       {/* Desktop sidebar */}
       <aside
         aria-label="Main navigation"
-        className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col gap-5 border-r-2 border-border bg-card px-4 py-[22px] desktop:flex"
+        className="sticky top-0 hidden h-dvh w-62 shrink-0 flex-col gap-5 border-r-2 border-border bg-card px-4 py-5.5 desktop:flex"
       >
         <Link
           href="/app"
@@ -84,7 +88,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
                 isActive(href) && 'border-foreground bg-muted',
               )}
             >
-              <Icon className="size-[18px]" aria-hidden strokeWidth={2.2} />
+              <Icon className="size-4.5" aria-hidden strokeWidth={2.2} />
               {label}
             </Link>
           ))}
@@ -98,7 +102,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
               isActive('/app/settings') && 'border-foreground bg-muted',
             )}
           >
-            <SettingsIcon className="size-[18px]" aria-hidden strokeWidth={2.2} />
+            <SettingsIcon className="size-4.5" aria-hidden strokeWidth={2.2} />
             Settings
           </Link>
           <div className="flex items-center gap-2.5 rounded-xl p-2">
@@ -124,14 +128,14 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
       {/* Tablet icon rail */}
       <aside
         aria-label="Main navigation"
-        className="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-center gap-3 border-r-2 border-border bg-card px-3 py-[18px] tablet:flex desktop:hidden"
+        className="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col items-center gap-3 border-r-2 border-border bg-card px-3 py-4.5 tablet:flex desktop:hidden"
       >
         <Link href="/app" aria-label="Keepmint home">
           <LogoMark className="size-10 rounded-[11px]" />
         </Link>
         <Button
           size="icon"
-          className="my-1.5 size-[50px] rounded-[14px]"
+          className="my-1.5 size-12.5 rounded-[14px]"
           aria-label="Add link"
           onClick={() => openAddLink()}
         >
@@ -170,7 +174,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
             href="/app"
             className="flex flex-1 items-center gap-2 font-display text-[19px] font-extrabold tablet:hidden"
           >
-            <LogoMark className="size-[30px]" />
+            <LogoMark className="size-7.5" />
             keepmint
           </Link>
           <div className="hidden flex-1 tablet:block" />
@@ -195,10 +199,10 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
           <Button
             size="icon"
             aria-label="Add link"
-            className="-mt-[26px] size-14 rounded-[18px]"
+            className="-mt-6.5 size-14 rounded-[18px]"
             onClick={() => openAddLink()}
           >
-            <PlusIcon className="!size-6" aria-hidden strokeWidth={2.8} />
+            <PlusIcon className="size-6!" aria-hidden strokeWidth={2.8} />
           </Button>
           {NAV.slice(2).map((item) => (
             <TabLink key={item.href} {...item} active={isActive(item.href)} />
@@ -221,7 +225,7 @@ function TabLink({ short, href, icon: Icon, active }: (typeof NAV)[number] & { a
     >
       <span
         className={cn(
-          'flex h-[30px] w-10 items-center justify-center rounded-[10px]',
+          'flex h-7.5 w-10 items-center justify-center rounded-[10px]',
           active && 'bg-muted',
         )}
       >

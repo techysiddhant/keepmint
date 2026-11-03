@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
 import { AppShell } from '@/components/app-shell'
 import { AddLinkProvider } from '@/components/library/add-link'
-import { LibraryProvider } from '@/components/library/library-provider'
+import { LibraryUserProvider } from '@/components/library/use-library'
 import { requireUser } from '@/lib/session'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser()
   return (
-    <LibraryProvider>
+    <LibraryUserProvider userId={user.id}>
       <AddLinkProvider>
         <AppShell
           user={{
@@ -20,6 +20,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </AppShell>
       </AddLinkProvider>
-    </LibraryProvider>
+    </LibraryUserProvider>
   )
 }

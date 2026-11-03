@@ -117,7 +117,7 @@ export function ForgotForm() {
             void form.handleSubmit()
           }}
         >
-          <FieldGroup className="gap-[18px]">
+          <FieldGroup className="gap-4.5">
             <form.Field name="email">
               {(field) => (
                 <TextField

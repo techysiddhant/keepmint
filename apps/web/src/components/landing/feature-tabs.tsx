@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 const TABS = ['Auto-collections', 'Summaries', 'Never lose a page'] as const
 
 const COLLECTIONS = [
-  ['Kitchen', '18 links · 6 videos', 'bg-pink text-sticker-ink -rotate-[1.5deg]'],
+  ['Kitchen', '18 links · 6 videos', 'bg-pink text-sticker-ink rotate-[-1.5deg]'],
   ['Rust & systems', '34 links · 2 repos', 'bg-yellow text-sticker-ink rotate-1'],
   ['Side projects', '21 links', 'bg-mint text-sticker-ink rotate-[1.5deg]'],
   ['Design refs', '52 links', 'bg-violet text-white -rotate-1'],
@@ -57,7 +57,7 @@ export function FeatureTabs() {
           <TabsTrigger
             key={label}
             value={String(i)}
-            className="h-12 flex-none rounded-[14px] border-2 border-border bg-card px-[18px] hover:-translate-y-px hover:bg-card data-active:bg-primary data-active:text-primary-foreground data-active:shadow-hard data-active:hover:bg-primary"
+            className="h-12 flex-none rounded-[14px] border-2 border-border bg-card px-4.5 hover:-translate-y-px hover:bg-card data-active:bg-primary data-active:text-primary-foreground data-active:shadow-hard data-active:hover:bg-primary"
           >
             {label}
           </TabsTrigger>
@@ -65,7 +65,7 @@ export function FeatureTabs() {
       </TabsList>
       <TabsContent
         value="0"
-        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-[5px_5px_0_var(--shadow)]"
+        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-hard-lg"
       >
         <Panel
           title="Collections that build themselves"
@@ -73,16 +73,13 @@ export function FeatureTabs() {
         >
           <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3.5">
             {COLLECTIONS.map(([name, count, cls]) => (
-              <div
-                key={name}
-                className={`lift rounded-[18px] border-2 border-border p-[18px] ${cls}`}
-              >
+              <div key={name} className={`lift rounded-[18px] border-2 border-border p-4.5 ${cls}`}>
                 <strong className="font-display">{name}</strong>
                 <br />
                 <span className="text-sm">{count}</span>
               </div>
             ))}
-            <div className="col-span-full flex flex-wrap items-center justify-between gap-3 rounded-[18px] border-2 border-dashed border-border p-[18px]">
+            <div className="col-span-full flex flex-wrap items-center justify-between gap-3 rounded-[18px] border-2 border-dashed border-border p-4.5">
               <span>
                 <strong>Suggested: Travel</strong>{' '}
                 <span className="text-muted-foreground">· 7 links look related</span>
@@ -96,7 +93,7 @@ export function FeatureTabs() {
       </TabsContent>
       <TabsContent
         value="1"
-        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-[5px_5px_0_var(--shadow)]"
+        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-hard-lg"
       >
         <Panel
           title="A TL;DR on every link"
@@ -106,7 +103,7 @@ export function FeatureTabs() {
             {SUMMARIES.map(([type, bg, title, text]) => (
               <div
                 key={title}
-                className="lift flex items-start gap-3.5 rounded-2xl border-2 border-border px-[18px] py-4"
+                className="lift flex items-start gap-3.5 rounded-2xl border-2 border-border px-4.5 py-4"
               >
                 <span
                   className={`shrink-0 rounded-lg border-2 border-sticker-ink px-2 py-0.5 text-xs font-bold text-sticker-ink ${bg}`}
@@ -125,7 +122,7 @@ export function FeatureTabs() {
       </TabsContent>
       <TabsContent
         value="2"
-        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-[5px_5px_0_var(--shadow)]"
+        className="mt-3.5 rounded-[26px] border-2 border-border bg-card p-[clamp(22px,4vw,44px)] shadow-hard-lg"
       >
         <Panel
           title="Never lose a page again"

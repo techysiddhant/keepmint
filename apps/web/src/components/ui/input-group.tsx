@@ -14,7 +14,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="input-group"
       role="group"
       className={cn(
-        'group/input-group relative flex h-[52px] w-full min-w-0 items-center rounded-xl border-2 border-input bg-field transition-[transform,box-shadow] duration-150 ease-pop outline-none has-disabled:opacity-60 has-[[data-slot=input-group-control]:focus-visible]:-translate-x-0.5 has-[[data-slot=input-group-control]:focus-visible]:-translate-y-0.5 has-[[data-slot=input-group-control]:focus-visible]:shadow-focus has-[[data-slot][aria-invalid=true]]:border-destructive has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1',
+        'group/input-group relative flex h-13 w-full min-w-0 items-center rounded-xl border-2 border-input bg-field transition-[transform,box-shadow] duration-150 ease-pop outline-none has-disabled:opacity-60 has-[[data-slot=input-group-control]:focus-visible]:-translate-x-0.5 has-[[data-slot=input-group-control]:focus-visible]:-translate-y-0.5 has-[[data-slot=input-group-control]:focus-visible]:shadow-focus has-[[data-slot][aria-invalid=true]]:border-destructive has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1',
         className,
       )}
       {...props}

@@ -4,8 +4,8 @@ import { localDay, type SyncLink } from '@keepmint/core'
 import { ClockIcon, RotateCwIcon, SparklesIcon, TriangleAlertIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { useLibrary } from '@/components/library/library-provider'
 import { timeAgo } from '@/components/library/link-display'
+import { useLibrary } from '@/components/library/use-library'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { FirstRun } from './first-run'
@@ -67,10 +67,14 @@ function Dashboard({
     const day = localDay(timezone, new Date(l.savedAt))
     perDay.set(day, (perDay.get(day) ?? 0) + 1)
   }
-  const spark = Array.from(
-    { length: 7 },
-    (_, i) => perDay.get(localDay(timezone, new Date(now - (6 - i) * DAY))) ?? 0,
-  )
+  // Step back from today's local date by calendar days (UTC date maths on the YYYY-MM-DD
+  // string, so a 23- or 25-hour DST day can't skip or repeat a date).
+  const today = new Date(`${localDay(timezone, new Date(now))}T00:00:00Z`)
+  const spark = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(today)
+    day.setUTCDate(today.getUTCDate() - (6 - i))
+    return perDay.get(day.toISOString().slice(0, 10)) ?? 0
+  })
   const sparkMax = Math.max(1, ...spark)
   const readLater = links.filter((l) => l.readLater).length
   const waiting = links.filter(isBusy)
@@ -80,7 +84,7 @@ function Dashboard({
   const diff = thisWeek - lastWeek
 
   return (
-    <div className="mx-auto flex max-w-[1160px] flex-col gap-6">
+    <div className="mx-auto flex max-w-290 flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-[clamp(26px,4vw,34px)] leading-tight font-extrabold tracking-tight">
           {greeting(timezone)}
@@ -110,7 +114,7 @@ function Dashboard({
           <div
             role="img"
             aria-label={`Saves per day, last 7 days: ${spark.join(', ')}`}
-            className="absolute top-[18px] right-[18px] flex h-[30px] items-end gap-[3px]"
+            className="absolute top-4.5 right-4.5 flex h-7.5 items-end gap-0.75"
           >
             {spark.map((n, i) => (
               <span
@@ -131,7 +135,7 @@ function Dashboard({
         <Stat
           label="Being read"
           value={waiting.length}
-          icon={<ClockIcon aria-hidden className="size-[15px]" strokeWidth={2.4} />}
+          icon={<ClockIcon aria-hidden className="size-3.75" strokeWidth={2.4} />}
           className={waiting.length ? 'bg-yellow text-sticker-ink' : undefined}
         >
           <span className="text-[13px] font-semibold">
@@ -141,7 +145,7 @@ function Dashboard({
         <Stat
           label="Couldn’t read"
           value={failed.length}
-          icon={<TriangleAlertIcon aria-hidden className="size-[15px]" strokeWidth={2.4} />}
+          icon={<TriangleAlertIcon aria-hidden className="size-3.75" strokeWidth={2.4} />}
           className={failed.length ? 'bg-fail-soft text-err-ink' : undefined}
         >
           <span className="text-[13px] font-semibold">
@@ -151,7 +155,7 @@ function Dashboard({
       </section>
 
       {usage && (
-        <div className="flex flex-wrap items-center gap-x-[18px] gap-y-2.5 rounded-[18px] border-2 border-border bg-card px-[18px] py-3.5">
+        <div className="flex flex-wrap items-center gap-x-4.5 gap-y-2.5 rounded-[18px] border-2 border-border bg-card px-4.5 py-3.5">
           <span className="flex items-center gap-2 text-sm font-bold">
             <SparklesIcon aria-hidden className="size-4" strokeWidth={2.2} />
             AI sorts today
@@ -159,7 +163,7 @@ function Dashboard({
           <span className="font-display text-lg font-extrabold">
             {usage.used} <span className="font-sans text-sm font-semibold">/ {usage.limit}</span>
           </span>
-          <UsageBar usage={usage} className="min-w-[180px] flex-1" />
+          <UsageBar usage={usage} className="min-w-45 flex-1" />
           <span className="text-[13px] font-semibold text-muted-foreground">
             {!usage.enabled
               ? 'AI sorting is off'
@@ -302,7 +306,7 @@ function Stat({
   return (
     <div
       className={cn(
-        'relative flex flex-col gap-1.5 rounded-[18px] border-2 border-border bg-card p-[18px]',
+        'relative flex flex-col gap-1.5 rounded-[18px] border-2 border-border bg-card p-4.5',
         className,
       )}
     >
@@ -325,7 +329,7 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <div
       role="alert"
-      className="mx-auto flex max-w-[560px] flex-col items-start gap-3 rounded-[20px] border-2 border-border bg-fail-soft p-6 text-err-ink"
+      className="mx-auto flex max-w-140 flex-col items-start gap-3 rounded-[20px] border-2 border-border bg-fail-soft p-6 text-err-ink"
     >
       <h1 className="font-display text-xl font-bold">Couldn’t load your library</h1>
       <p>Check your connection and try again. Nothing you saved is lost.</p>
@@ -343,12 +347,12 @@ function DashboardSkeleton() {
       role="status"
       aria-busy="true"
       aria-label="Loading your library"
-      className="mx-auto flex max-w-[1160px] flex-col gap-6"
+      className="mx-auto flex max-w-290 flex-col gap-6"
     >
       <div className="h-9 w-72 animate-pulse rounded-xl bg-muted" />
       <div className="grid grid-cols-2 gap-4 desktop:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-[118px] animate-pulse rounded-[18px] bg-muted" />
+          <div key={i} className="h-29.5 animate-pulse rounded-[18px] bg-muted" />
         ))}
       </div>
       <div className="h-64 animate-pulse rounded-[20px] bg-muted" />

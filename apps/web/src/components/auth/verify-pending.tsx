@@ -34,17 +34,17 @@ export function VerifyPending({ email }: { email: string }) {
   }
 
   return (
-    <AuthCard role="status" className="flex flex-col gap-[18px]">
+    <AuthCard role="status" className="flex flex-col gap-4.5">
       <div className="relative self-start">
         <span
           aria-hidden
-          className="flex size-[72px] items-center justify-center rounded-[20px] border-2 border-border bg-yellow text-sticker-ink"
+          className="flex size-18 items-center justify-center rounded-[20px] border-2 border-border bg-yellow text-sticker-ink"
         >
           <MailIcon className="size-8" />
         </span>
         <span
           aria-hidden
-          className="absolute -top-2 -right-2.5 flex h-[26px] min-w-[26px] items-center justify-center rounded-full border-2 border-border bg-pink px-1.5 text-xs font-bold text-sticker-ink"
+          className="absolute -top-2 -right-2.5 flex h-6.5 min-w-6.5 items-center justify-center rounded-full border-2 border-border bg-pink px-1.5 text-xs font-bold text-sticker-ink"
         >
           1
         </span>

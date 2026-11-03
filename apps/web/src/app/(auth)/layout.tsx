@@ -8,21 +8,21 @@ const STICKERS = [
     col: 'Kitchen',
     title: 'Crispy chili oil, three ways',
     note: 'Key step at 4:10 — steep low first.',
-    cls: 'left-0 top-[30px] w-[280px] bg-pink -rotate-[5deg]',
+    cls: 'left-0 top-7.5 w-70 bg-pink rotate-[-5deg]',
     delay: '0s',
   },
   {
     col: 'Rust & systems',
     title: 'How the async executor polls',
     note: 'Toy executor explains wakers. 14 min.',
-    cls: 'left-[230px] top-0 w-[270px] bg-yellow rotate-[4deg]',
+    cls: 'left-57.5 top-0 w-67.5 bg-yellow rotate-[4deg]',
     delay: '1.2s',
   },
   {
     col: 'Side projects',
     title: 'tokio-rs / mini-redis',
     note: '',
-    cls: 'left-[110px] top-[150px] w-[260px] bg-mint -rotate-2',
+    cls: 'left-27.5 top-37.5 w-65 bg-mint -rotate-2',
     delay: '2.2s',
   },
 ]
@@ -49,21 +49,21 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           href="/"
           className="flex items-center gap-2.5 self-start font-display text-[22px] font-extrabold"
         >
-          <LogoMark className="size-[34px] rounded-[10px] border-sticker-ink" />
+          <LogoMark className="size-8.5 rounded-[10px] border-sticker-ink" />
           keepmint
         </Link>
-        <div className="flex max-w-[520px] flex-col gap-5">
+        <div className="flex max-w-130 flex-col gap-5">
           <span className="font-display text-[clamp(36px,3.6vw,54px)] leading-[1.05] font-extrabold tracking-[-0.03em]">
             Your links,
             <br />
             <SortedWord big /> by AI.
           </span>
-          <span className="max-w-[440px] text-lg text-brand-soft">
+          <span className="max-w-110 text-lg text-brand-soft">
             Save anything with a link. Keepmint reads it, sums it up and files it into the right
             collection — online or off.
           </span>
         </div>
-        <div aria-hidden className="relative h-[260px]">
+        <div aria-hidden className="relative h-65">
           {STICKERS.map((s) => (
             <div
               key={s.col}
@@ -85,10 +85,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <header className="flex flex-col gap-4 border-b-[3px] border-sticker-ink bg-brand px-5 pt-[18px] pb-[22px] text-white desktop:hidden">
+      <header className="flex flex-col gap-4 border-b-[3px] border-sticker-ink bg-brand px-5 pt-4.5 pb-5.5 text-white desktop:hidden">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2 font-display text-xl font-extrabold">
-            <LogoMark className="size-[30px] border-sticker-ink" />
+            <LogoMark className="size-7.5 border-sticker-ink" />
             keepmint
           </Link>
           <ThemeToggle />
@@ -109,7 +109,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <ThemeToggle />
         </div>
         <div className="flex flex-1 items-center justify-center py-6">
-          <div className="flex w-full max-w-[440px] flex-col gap-[22px]">{children}</div>
+          <div className="flex w-full max-w-110 flex-col gap-5.5">{children}</div>
         </div>
         <p className="text-center text-sm text-muted-foreground">
           © 2026 Keepmint ·{' '}

@@ -19,7 +19,7 @@ export function PasswordStrength({ password }: { password: string }) {
   return (
     <div className="mt-1 flex flex-col gap-2">
       <div className="flex items-center gap-2.5">
-        <div aria-hidden className="grid flex-1 grid-cols-4 gap-[5px]">
+        <div aria-hidden className="grid flex-1 grid-cols-4 gap-1.25">
           {[0, 1, 2, 3].map((i) => (
             <span
               key={i}
@@ -30,7 +30,7 @@ export function PasswordStrength({ password }: { password: string }) {
             />
           ))}
         </div>
-        <span aria-live="polite" className="min-w-[74px] text-right text-[13px] font-bold">
+        <span aria-live="polite" className="min-w-18.5 text-right text-[13px] font-bold">
           {password ? LABELS[score] : ''}
         </span>
       </div>

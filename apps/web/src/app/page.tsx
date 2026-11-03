@@ -49,7 +49,7 @@ const LIMIT = DEFAULTS.dailyAiLimit
 const onBrand = '[--shadow:#111] border-sticker-ink'
 const h2 =
   'font-display text-[clamp(30px,4.4vw,54px)] leading-[1.05] font-extrabold tracking-[-0.03em]'
-const section = 'mx-auto max-w-[1240px] px-5 pt-[clamp(80px,10vw,128px)]'
+const section = 'mx-auto max-w-310 px-5 pt-[clamp(80px,10vw,128px)]'
 
 const LINK_TYPES = [
   'Articles',
@@ -169,7 +169,7 @@ const FAQ: Array<[string, ReactNode]> = [
 const FOOTER_STICKERS = [
   [
     'Product',
-    'bg-yellow -rotate-[4deg]',
+    'bg-yellow rotate-[-4deg]',
     [
       ['Features', '#features'],
       ['Live demo', '#demo'],
@@ -178,7 +178,7 @@ const FOOTER_STICKERS = [
   ],
   [
     'Account',
-    'bg-pink rotate-[3deg] tablet:mt-6',
+    'bg-pink rotate-3 tablet:mt-6',
     [
       ['Sign up', '/signup'],
       ['Log in', '/login'],
@@ -205,7 +205,7 @@ export default function HomePage() {
         {/* HERO */}
         <section
           id="top"
-          className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-12 px-5 pt-[clamp(40px,7vw,88px)]"
+          className="mx-auto flex max-w-310 flex-wrap items-center gap-12 px-5 pt-[clamp(40px,7vw,88px)]"
         >
           <div className="flex min-w-0 flex-[1_1_420px] flex-col gap-6">
             <Badge
@@ -223,7 +223,7 @@ export default function HomePage() {
               </span>{' '}
               by AI.
             </h1>
-            <p className="max-w-[520px] animate-rise text-[clamp(18px,1.6vw,21px)] text-muted-foreground [animation-delay:.16s]">
+            <p className="max-w-130 animate-rise text-[clamp(18px,1.6vw,21px)] text-muted-foreground [animation-delay:.16s]">
               Drop in any link — a video, a thread, a recipe, a repo. Keepmint reads it, sums it up
               and files it into the right collection. You just keep saving. Even offline.
             </p>
@@ -234,14 +234,14 @@ export default function HomePage() {
               <a href="#demo" className={buttonVariants({ variant: 'secondary', size: 'xl' })}>
                 <span
                   aria-hidden
-                  className="flex size-[26px] items-center justify-center rounded-full border-2 border-sticker-ink bg-pink text-sticker-ink"
+                  className="flex size-6.5 items-center justify-center rounded-full border-2 border-sticker-ink bg-pink text-sticker-ink"
                 >
                   <PlayIcon className="size-3 fill-current" />
                 </span>
                 Try the live demo
               </a>
             </div>
-            <ul className="flex animate-rise flex-wrap gap-x-[22px] gap-y-2 text-[15px] font-medium text-muted-foreground [animation-delay:.34s]">
+            <ul className="flex animate-rise flex-wrap gap-x-5.5 gap-y-2 text-[15px] font-medium text-muted-foreground [animation-delay:.34s]">
               {['Free during the beta', 'No credit card', 'Runs in any browser'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <CheckIcon className="size-4" aria-hidden strokeWidth={3} />
@@ -258,7 +258,7 @@ export default function HomePage() {
           aria-label="Link types Keepmint understands"
           className="group mt-[clamp(64px,8vw,104px)] overflow-hidden border-y-2 border-border bg-yellow text-sticker-ink"
         >
-          <div className="flex w-max animate-marquee py-[18px] font-display text-xl font-bold whitespace-nowrap group-hover:[animation-play-state:paused]">
+          <div className="flex w-max animate-marquee py-4.5 font-display text-xl font-bold whitespace-nowrap group-hover:paused">
             {[0, 1].map((copy) =>
               LINK_TYPES.map((t) => (
                 <span
@@ -266,7 +266,7 @@ export default function HomePage() {
                   aria-hidden={copy === 1 || undefined}
                   className="flex items-center"
                 >
-                  <span className="px-[22px]">{t}</span>
+                  <span className="px-5.5">{t}</span>
                   <span aria-hidden>✦</span>
                 </span>
               )),
@@ -277,10 +277,10 @@ export default function HomePage() {
         {/* HOW IT WORKS */}
         <section id="how" aria-labelledby="how-h" className={section}>
           <div className="mb-11 flex flex-wrap items-end justify-between gap-5">
-            <h2 id="how-h" className={`max-w-[680px] ${h2}`}>
+            <h2 id="how-h" className={`max-w-170 ${h2}`}>
               Three steps. You only do the first one.
             </h2>
-            <p className="max-w-[360px] text-muted-foreground">
+            <p className="max-w-90 text-muted-foreground">
               No folders to set up. No tags to remember. Just save and move on.
             </p>
           </div>
@@ -288,7 +288,7 @@ export default function HomePage() {
             {STEPS.map(([tag, bg, title, text]) => (
               <div
                 key={title}
-                className="lift flex flex-col gap-3.5 rounded-[22px] border-2 border-border bg-card p-[30px] shadow-[5px_5px_0_var(--shadow)]"
+                className="lift flex flex-col gap-3.5 rounded-[22px] border-2 border-border bg-card p-7.5 shadow-hard-lg"
               >
                 <span
                   className={`self-start rounded-full border-2 border-border px-3 py-1.5 font-display text-[15px] font-extrabold text-sticker-ink ${bg}`}
@@ -304,7 +304,7 @@ export default function HomePage() {
 
         {/* FEATURES */}
         <section id="features" aria-labelledby="feat-h" className={`${section} scroll-mt-24`}>
-          <h2 id="feat-h" className={`mb-7 max-w-[760px] ${h2}`}>
+          <h2 id="feat-h" className={`mb-7 max-w-190 ${h2}`}>
             Bookmarks that don’t turn into a junk drawer.
           </h2>
           <FeatureTabs />
@@ -312,8 +312,8 @@ export default function HomePage() {
 
         {/* OFFLINE */}
         <section id="offline" aria-labelledby="off-h" className={`${section} scroll-mt-24`}>
-          <div className="flex flex-wrap items-center gap-10 rounded-[30px] border-[3px] border-border bg-violet p-[clamp(28px,5vw,64px)] text-white shadow-[6px_6px_0_var(--shadow)]">
-            <div className="flex flex-[1_1_400px] flex-col gap-[18px]">
+          <div className="flex flex-wrap items-center gap-10 rounded-[30px] border-[3px] border-border bg-violet p-[clamp(28px,5vw,64px)] text-white shadow-pop">
+            <div className="flex flex-[1_1_400px] flex-col gap-4.5">
               <h2
                 id="off-h"
                 className="font-display text-[clamp(32px,5vw,60px)] leading-[1.03] font-extrabold tracking-[-0.035em]"
@@ -334,7 +334,7 @@ export default function HomePage() {
                   'mt-1.5 self-start bg-white text-sticker-ink',
                 )}
               >
-                <DownloadIcon className="size-[18px]" aria-hidden />
+                <DownloadIcon className="size-4.5" aria-hidden />
                 Open Keepmint
               </Link>
             </div>
@@ -362,13 +362,13 @@ export default function HomePage() {
             {ANYWHERE.map(([Icon, bg, title, text]) => (
               <div
                 key={title}
-                className="lift flex flex-col gap-3 rounded-[22px] border-2 border-border bg-card p-[26px] shadow-[5px_5px_0_var(--shadow)]"
+                className="lift flex flex-col gap-3 rounded-[22px] border-2 border-border bg-card p-6.5 shadow-hard-lg"
               >
                 <span
                   aria-hidden
                   className={`flex size-12 items-center justify-center rounded-[14px] border-2 border-border text-sticker-ink ${bg}`}
                 >
-                  <Icon className="size-[22px]" />
+                  <Icon className="size-5.5" />
                 </span>
                 <h3 className="font-display text-[19px]">{title}</h3>
                 <p className="text-base text-muted-foreground">{text}</p>
@@ -380,30 +380,30 @@ export default function HomePage() {
         {/* COMPARISON */}
         <section
           aria-labelledby="cmp-h"
-          className="mx-auto max-w-[1040px] px-5 pt-[clamp(80px,10vw,128px)]"
+          className="mx-auto max-w-260 px-5 pt-[clamp(80px,10vw,128px)]"
         >
           <h2 id="cmp-h" className={`mb-9 text-center ${h2}`}>
             Why not just use bookmarks?
           </h2>
-          <div className="overflow-x-auto rounded-[22px] border-2 border-border bg-card shadow-[5px_5px_0_var(--shadow)]">
-            <table className="w-full min-w-[560px] border-collapse text-base">
+          <div className="overflow-x-auto rounded-[22px] border-2 border-border bg-card shadow-hard-lg">
+            <table className="w-full min-w-140 border-collapse text-base">
               <thead>
                 <tr className="text-left">
                   <th
                     scope="col"
-                    className="border-b-2 border-border px-5 py-[18px] font-bold text-muted-foreground"
+                    className="border-b-2 border-border px-5 py-4.5 font-bold text-muted-foreground"
                   >
                     What you get
                   </th>
-                  <th scope="col" className="border-b-2 border-border px-5 py-[18px] font-bold">
+                  <th scope="col" className="border-b-2 border-border px-5 py-4.5 font-bold">
                     Browser bookmarks
                   </th>
-                  <th scope="col" className="border-b-2 border-border px-5 py-[18px] font-bold">
+                  <th scope="col" className="border-b-2 border-border px-5 py-4.5 font-bold">
                     Read-later apps
                   </th>
                   <th
                     scope="col"
-                    className="border-b-2 border-border bg-yellow px-5 py-[18px] font-display text-sticker-ink"
+                    className="border-b-2 border-border bg-yellow px-5 py-4.5 font-display text-sticker-ink"
                   >
                     Keepmint
                   </th>
@@ -433,7 +433,7 @@ export default function HomePage() {
         <section
           id="pricing"
           aria-labelledby="price-h"
-          className="mx-auto max-w-[1080px] scroll-mt-24 px-5 pt-[clamp(80px,10vw,128px)]"
+          className="mx-auto max-w-270 scroll-mt-24 px-5 pt-[clamp(80px,10vw,128px)]"
         >
           <div className="mb-10 flex flex-col items-center gap-3.5 text-center">
             <Badge variant="mint" className="gap-2 rounded-full px-3.5 py-1.5 text-sm">
@@ -443,11 +443,11 @@ export default function HomePage() {
             <h2 id="price-h" className={h2}>
               Free while we’re in beta
             </h2>
-            <p className="max-w-[560px] text-lg text-muted-foreground">
+            <p className="max-w-140 text-lg text-muted-foreground">
               No plans to pick and no card to add. Sign up and start saving.
             </p>
           </div>
-          <div className="flex flex-wrap overflow-hidden rounded-[28px] border-[3px] border-border bg-card shadow-[6px_6px_0_var(--shadow)]">
+          <div className="flex flex-wrap overflow-hidden rounded-[28px] border-[3px] border-border bg-card shadow-pop">
             <div className="flex flex-[1_1_320px] flex-col gap-4 bg-yellow p-[clamp(24px,4vw,40px)] text-sticker-ink">
               <Badge
                 variant="outline"
@@ -480,14 +480,14 @@ export default function HomePage() {
               </Link>
               <span className="text-center text-[13px] font-semibold">No credit card needed</span>
             </div>
-            <div className="flex flex-[1.4_1_360px] flex-col gap-[18px] p-[clamp(24px,4vw,40px)]">
+            <div className="flex flex-[1.4_1_360px] flex-col gap-4.5 p-[clamp(24px,4vw,40px)]">
               <strong className="font-display text-xl tracking-[-0.02em]">What’s included</strong>
               <ul className="flex flex-col gap-3.5">
                 {INCLUDED.map(([title, text], i) => (
                   <li key={title} className="flex gap-3">
                     <span
                       aria-hidden
-                      className={`flex size-[26px] shrink-0 items-center justify-center rounded-lg border-2 border-border text-sticker-ink ${i === 0 ? 'bg-pink' : 'bg-mint'}`}
+                      className={`flex size-6.5 shrink-0 items-center justify-center rounded-lg border-2 border-border text-sticker-ink ${i === 0 ? 'bg-pink' : 'bg-mint'}`}
                     >
                       {i === 0 ? '✦' : <CheckIcon className="size-3.5" strokeWidth={3} />}
                     </span>
@@ -511,7 +511,7 @@ export default function HomePage() {
         <section
           id="faq"
           aria-labelledby="faq-h"
-          className="mx-auto max-w-[860px] scroll-mt-24 px-5 pt-[clamp(80px,10vw,128px)]"
+          className="mx-auto max-w-215 scroll-mt-24 px-5 pt-[clamp(80px,10vw,128px)]"
         >
           <h2 id="faq-h" className={`mb-8 text-center ${h2}`}>
             Questions? Answers.
@@ -529,9 +529,9 @@ export default function HomePage() {
 
       {/* FOOTER (sticker board + final CTA) */}
       <footer className="mt-[clamp(80px,10vw,128px)] border-t-[3px] border-sticker-ink bg-brand text-white">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-[clamp(40px,5vw,56px)] px-5 pt-[clamp(48px,6vw,72px)] pb-7">
+        <div className="mx-auto flex max-w-310 flex-col gap-[clamp(40px,5vw,56px)] px-5 pt-[clamp(48px,6vw,72px)] pb-7">
           <div className="flex flex-wrap items-start justify-between gap-12">
-            <div className="flex max-w-[480px] flex-[1_1_360px] flex-col gap-[22px]">
+            <div className="flex max-w-120 flex-[1_1_360px] flex-col gap-5.5">
               <h2
                 id="cta-h"
                 className="font-display text-[clamp(32px,4.2vw,50px)] leading-[1.05] font-extrabold tracking-[-0.03em]"
@@ -562,12 +562,12 @@ export default function HomePage() {
             </div>
             <nav
               aria-label="Footer"
-              className="flex flex-[1_1_520px] flex-wrap justify-end gap-[22px] pt-2 text-sticker-ink"
+              className="flex flex-[1_1_520px] flex-wrap justify-end gap-5.5 pt-2 text-sticker-ink"
             >
               {FOOTER_STICKERS.map(([title, cls, links]) => (
                 <div
                   key={title}
-                  className={`flex max-w-[200px] flex-[1_1_160px] flex-col gap-2.5 rounded-[20px] border-2 border-sticker-ink p-[22px] shadow-[6px_6px_0_#111] transition-[transform,box-shadow] duration-200 ease-pop hover:-translate-x-[3px] hover:-translate-y-[5px] hover:shadow-[10px_10px_0_#111] ${cls}`}
+                  className={`flex max-w-50 flex-[1_1_160px] flex-col gap-2.5 rounded-[20px] border-2 border-sticker-ink p-5.5 shadow-[6px_6px_0_#111] transition-[transform,box-shadow] duration-200 ease-pop hover:-translate-x-0.75 hover:-translate-y-1.25 hover:shadow-[10px_10px_0_#111] ${cls}`}
                 >
                   <strong className="mb-1 font-display text-[15px]">{title}</strong>
                   {links.map(([label, href]) => (
@@ -594,9 +594,9 @@ export default function HomePage() {
             <a
               href="mailto:hello@keepmint.store"
               aria-label="Email us"
-              className="flex size-11 items-center justify-center rounded-full border-2 border-sticker-ink bg-white text-sticker-ink transition-transform hover:-translate-y-[3px] hover:-rotate-6"
+              className="flex size-11 items-center justify-center rounded-full border-2 border-sticker-ink bg-white text-sticker-ink transition-transform hover:-translate-y-0.75 hover:-rotate-6"
             >
-              <MailIcon className="size-[18px]" aria-hidden />
+              <MailIcon className="size-4.5" aria-hidden />
             </a>
           </div>
         </div>

@@ -104,20 +104,25 @@ async function call<T>(
     typeof zodOutputFormat<typeof linkAiOutputSchema | typeof collectionPickSchema>
   >,
   maxTokens: number,
+  signal?: AbortSignal,
 ): Promise<{ output: T; usage: AiUsageInfo }> {
   const api = client()
   const started = Date.now()
   let response: Awaited<ReturnType<typeof api.messages.parse>>
   try {
-    response = await api.messages.parse({
-      model: AI_MODEL,
-      max_tokens: maxTokens,
-      // Filing a link needs no reasoning; thinking off keeps it to one short reply.
-      thinking: { type: 'disabled' },
-      output_config: { effort: 'low', format },
-      system,
-      messages: [{ role: 'user', content: user }],
-    })
+    response = await api.messages.parse(
+      {
+        model: AI_MODEL,
+        max_tokens: maxTokens,
+        // Filing a link needs no reasoning; thinking off keeps it to one short reply.
+        thinking: { type: 'disabled' },
+        output_config: { effort: 'low', format },
+        system,
+        messages: [{ role: 'user', content: user }],
+      },
+      // Stops the request (and its retries) when pg-boss cancels the job.
+      { signal },
+    )
   } catch (err) {
     const usage = { inputTokens: 0, outputTokens: 0, costUsd: 0, latencyMs: Date.now() - started }
     const code =
@@ -147,6 +152,7 @@ export async function sortLink(
   page: PageRead,
   collections: AiCollection[],
   corrections: AiCorrection[],
+  signal?: AbortSignal,
 ): Promise<{ output: CleanLinkAiOutput; usage: AiUsageInfo }> {
   const user = `${collectionBlock(collections, corrections)}\n\nPage:\n${buildPageInput(page)}`
   const { output, usage } = await call<Parameters<typeof cleanLinkAiOutput>[0]>(
@@ -154,6 +160,7 @@ export async function sortLink(
     user,
     zodOutputFormat(linkAiOutputSchema),
     350,
+    signal,
   )
   return { output: cleanLinkAiOutput(output), usage }
 }
@@ -163,6 +170,7 @@ export async function pickCollection(
   link: { title: string; summary: string; tags: string[] },
   collections: AiCollection[],
   corrections: AiCorrection[],
+  signal?: AbortSignal,
 ): Promise<{ output: CollectionPick; usage: AiUsageInfo }> {
   const user = `${collectionBlock(collections, corrections)}\n\nLink:\nTitle: ${link.title}\nSummary: ${link.summary}\nTags: ${link.tags.join(', ')}`
   const { output, usage } = await call<CollectionPick>(
@@ -170,6 +178,7 @@ export async function pickCollection(
     user,
     zodOutputFormat(collectionPickSchema),
     80,
+    signal,
   )
   const collection = cleanCollectionName(output.collection)
   return {

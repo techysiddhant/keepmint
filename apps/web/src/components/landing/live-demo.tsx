@@ -136,7 +136,7 @@ export function LiveDemo() {
   return (
     <div
       id="demo"
-      className="min-w-0 flex-[1.25_1_500px] scroll-mt-28 animate-rise overflow-hidden rounded-[22px] border-2 border-border bg-card shadow-[5px_5px_0_var(--shadow)] [animation-delay:.16s]"
+      className="min-w-0 flex-[1.25_1_500px] scroll-mt-28 animate-rise overflow-hidden rounded-[22px] border-2 border-border bg-card shadow-hard-lg [animation-delay:.16s]"
     >
       <div className="flex flex-wrap items-center gap-2.5 border-b-2 border-border bg-background py-2.5 pr-3 pl-4">
         <span aria-hidden className="flex gap-1.5">
@@ -180,7 +180,7 @@ export function LiveDemo() {
             </div>
           ))}
         </div>
-        <div className="flex min-w-0 flex-[3_1_320px] flex-col gap-3.5 p-[18px]">
+        <div className="flex min-w-0 flex-[3_1_320px] flex-col gap-3.5 p-4.5">
           <span className="text-[13px] font-bold text-muted-foreground">1 · Pick a link</span>
           <div className="flex flex-wrap gap-2">
             {SAMPLES.map((s, i) => (
@@ -197,7 +197,7 @@ export function LiveDemo() {
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
-            <div className="flex h-[50px] min-w-0 flex-[1_1_200px] items-center gap-2 rounded-xl border-2 border-border bg-background px-3.5 text-sm">
+            <div className="flex h-12.5 min-w-0 flex-[1_1_200px] items-center gap-2 rounded-xl border-2 border-border bg-background px-3.5 text-sm">
               <LinkIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="truncate">{SAMPLES[sample]?.url}</span>
             </div>
@@ -223,16 +223,16 @@ export function LiveDemo() {
                   {done ? (
                     <span
                       aria-hidden
-                      className="flex size-[22px] animate-pop items-center justify-center rounded-full border-2 border-sticker-ink bg-mint text-sticker-ink"
+                      className="flex size-5.5 animate-pop items-center justify-center rounded-full border-2 border-sticker-ink bg-mint text-sticker-ink"
                     >
                       <CheckIcon className="size-3" strokeWidth={3} />
                     </span>
                   ) : active ? (
-                    <Loader2Icon className="size-[22px] animate-spin" aria-hidden />
+                    <Loader2Icon className="size-5.5 animate-spin" aria-hidden />
                   ) : (
                     <span
                       aria-hidden
-                      className="size-[22px] rounded-full border-2 border-dashed border-line"
+                      className="size-5.5 rounded-full border-2 border-dashed border-line"
                     />
                   )}
                   {label}
@@ -240,15 +240,15 @@ export function LiveDemo() {
               )
             })}
           </div>
-          <div aria-live="polite" className="flex min-h-[150px] flex-col">
+          <div aria-live="polite" className="flex min-h-37.5 flex-col">
             {phase === 'idle' && (
-              <div className="flex flex-1 flex-col justify-center gap-1.5 rounded-2xl border-2 border-dashed border-line p-[18px] text-muted-foreground">
+              <div className="flex flex-1 flex-col justify-center gap-1.5 rounded-2xl border-2 border-dashed border-line p-4.5 text-muted-foreground">
                 <strong className="text-foreground">Hit Save and watch it file itself.</strong>
                 Then flip the Wi-Fi switch off and save again — Keepmint keeps working.
               </div>
             )}
             {phase === 'run' && (
-              <div className="flex flex-1 flex-col gap-2.5 rounded-2xl border-2 border-border p-[18px]">
+              <div className="flex flex-1 flex-col gap-2.5 rounded-2xl border-2 border-border p-4.5">
                 {['w-2/5 h-3.5', 'w-[85%] h-5', 'w-full h-3', 'w-[70%] h-3'].map((w) => (
                   <span key={w} className={`animate-pulse rounded-md bg-muted ${w}`} />
                 ))}
@@ -256,7 +256,7 @@ export function LiveDemo() {
             )}
             {phase === 'filed' && card && (
               <div
-                className={`flex flex-1 animate-pop flex-col gap-2 rounded-2xl border-2 border-border p-[18px] ${card.card}`}
+                className={`flex flex-1 animate-pop flex-col gap-2 rounded-2xl border-2 border-border p-4.5 ${card.card}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2.5">
                   <span className="rounded-full border-2 border-sticker-ink bg-white px-2.5 py-0.5 text-[13px] font-bold text-sticker-ink">
@@ -270,7 +270,7 @@ export function LiveDemo() {
               </div>
             )}
             {phase === 'queued' && (
-              <div className="flex flex-1 animate-pop flex-col justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border p-[18px]">
+              <div className="flex flex-1 animate-pop flex-col justify-center gap-1.5 rounded-2xl border-2 border-dashed border-border p-4.5">
                 <strong className="font-display text-[17px]">Saved on this device</strong>
                 <span className="text-muted-foreground">
                   {queue.length === 1 ? '1 link is waiting.' : `${queue.length} links are waiting.`}{' '}
@@ -279,13 +279,13 @@ export function LiveDemo() {
               </div>
             )}
             {phase === 'syncing' && (
-              <div className="flex flex-1 items-center gap-3 rounded-2xl border-2 border-border p-[18px] font-bold">
+              <div className="flex flex-1 items-center gap-3 rounded-2xl border-2 border-border p-4.5 font-bold">
                 <Loader2Icon className="size-5 animate-spin" aria-hidden />
                 Back online — reading your queued links…
               </div>
             )}
             {phase === 'synced' && (
-              <div className="flex flex-1 animate-pop flex-col justify-center gap-1.5 rounded-2xl border-2 border-border bg-mint p-[18px] text-sticker-ink">
+              <div className="flex flex-1 animate-pop flex-col justify-center gap-1.5 rounded-2xl border-2 border-border bg-mint p-4.5 text-sticker-ink">
                 <strong className="font-display text-[17px]">All caught up</strong>
                 <span>
                   Back online — Keepmint read and filed {synced} queued{' '}

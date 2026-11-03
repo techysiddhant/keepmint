@@ -75,7 +75,7 @@ export function ResetForm({ token }: { token: string }) {
           void form.handleSubmit()
         }}
       >
-        <FieldGroup className="gap-[18px]">
+        <FieldGroup className="gap-4.5">
           <form.Field name="password">
             {(field) => (
               <TextField

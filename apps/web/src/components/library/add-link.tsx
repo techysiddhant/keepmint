@@ -27,8 +27,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { submitThenChange } from '@/lib/form'
 import { cn } from '@/lib/utils'
 import { addLinkSchema } from '@/lib/validation/link'
-import { useLibrary } from './library-provider'
 import { LINK_TYPE_DISPLAY } from './link-display'
+import { useLibrary } from './use-library'
 
 type AddLinkApi = { open: (url?: string) => void }
 const AddLinkContext = createContext<AddLinkApi | null>(null)
@@ -90,7 +90,7 @@ export function AddLinkProvider({ children }: { children: ReactNode }) {
     <AddLinkContext.Provider value={api}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="gap-5 sm:max-w-[520px]">
+        <DialogContent className="gap-5 sm:max-w-130">
           <AddLinkForm key={formKey} initialUrl={prefill} onDone={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
@@ -183,7 +183,7 @@ function AddLinkForm({ initialUrl, onDone }: { initialUrl: string; onDone: () =>
                       display.bg,
                     )}
                   >
-                    <display.icon className="size-[22px]" strokeWidth={2} />
+                    <display.icon className="size-5.5" strokeWidth={2} />
                   </span>
                   <span className="flex min-w-0 flex-col">
                     <strong className="truncate">{parsed.hostname.replace(/^www\./, '')}</strong>

@@ -82,7 +82,7 @@ function LoginForm({ next }: { next: string }) {
           void form.handleSubmit()
         }}
       >
-        <FieldGroup className="gap-[18px]">
+        <FieldGroup className="gap-4.5">
           <form.Field name="email">
             {(field) => (
               <TextField
@@ -138,7 +138,7 @@ function LoginForm({ next }: { next: string }) {
           </form.Subscribe>
         </FieldGroup>
       </form>
-      <p className="mt-[22px] text-center text-muted-foreground">
+      <p className="mt-5.5 text-center text-muted-foreground">
         New to Keepmint?{' '}
         <Link href="/signup" className={`font-bold text-foreground ${textLink}`}>
           Create an account
@@ -185,7 +185,7 @@ function SignupForm() {
           void form.handleSubmit()
         }}
       >
-        <FieldGroup className="gap-[18px]">
+        <FieldGroup className="gap-4.5">
           <form.Field name="name">
             {(field) => (
               <TextField
@@ -266,7 +266,7 @@ function SignupForm() {
           </form.Subscribe>
         </FieldGroup>
       </form>
-      <p className="mt-[22px] text-center text-muted-foreground">
+      <p className="mt-5.5 text-center text-muted-foreground">
         Already have an account?{' '}
         <Link href="/login" className={`font-bold text-foreground ${textLink}`}>
           Log in

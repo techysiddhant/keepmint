@@ -54,33 +54,71 @@ const GENERIC_FAILURE = 'Something went wrong reading this link. Try again.'
 const AI_FAILURE = 'Couldn’t summarise this link right now. Try again in a minute.'
 
 export async function handleProcessLink(jobs: Job<ProcessLinkData>[]) {
-  for (const job of jobs) await processLink(job.data.linkId)
+  for (const job of jobs) await processLink(job.data.linkId, job.signal)
 }
 
 type LinkPatch = Partial<typeof links.$inferInsert>
 
-async function updateLink(id: string, patch: LinkPatch) {
-  await db.update(links).set(patch).where(eq(links.id, id))
-}
-
-/** Per-link context: its logger, a reserved daily sort (to give back on error), the outcome. */
+/**
+ * Per-link context: its logger, the claim it holds, the job's abort signal, a reserved
+ * daily sort (to give back on error) and the outcome.
+ */
 type Ctx = {
   log: Logger
+  linkId: string
+  /** `links.attempts` set by this run's claim: the ownership token for its writes. */
+  attempt: number
+  signal?: AbortSignal
   reservedDay: string | null
   outcome?: { status: LinkStatus; reason?: string | null; collection?: string | null }
 }
 
-function finish(ctx: Ctx, id: string, status: LinkStatus, patch: LinkPatch = {}) {
+/** This run no longer owns the link (another run took it over) or pg-boss cancelled the job. */
+class LostClaimError extends Error {
+  constructor(readonly aborted: boolean) {
+    super(aborted ? 'job cancelled' : 'claim taken over by another run')
+  }
+}
+
+/** Only the run whose claim is still current may write the result. */
+const owned = (ctx: Ctx) =>
+  and(eq(links.id, ctx.linkId), eq(links.attempts, ctx.attempt), eq(links.status, 'processing'))
+
+/** Checked before each paid AI call: stop if cancelled or no longer the owner. */
+async function assertOwned(ctx: Ctx) {
+  if (ctx.signal?.aborted) throw new LostClaimError(true)
+  const [row] = await db.select({ id: links.id }).from(links).where(owned(ctx))
+  if (!row) throw new LostClaimError(false)
+}
+
+async function finish(ctx: Ctx, status: LinkStatus, patch: LinkPatch = {}) {
+  const rows = await db
+    .update(links)
+    .set({ ...patch, status, processedAt: new Date() })
+    .where(owned(ctx))
+    .returning({ id: links.id })
+  if (!rows.length) throw new LostClaimError(false)
   ctx.outcome = {
     status,
     reason: patch.failReason ?? patch.aiSkipReason,
     collection: patch.aiSuggestedCollection,
   }
-  return updateLink(id, { ...patch, status, processedAt: new Date() })
 }
 
-/** Runs one link through the pipeline. Never throws: any failure ends the link as `failed`. */
-export async function processLink(linkId: string) {
+/**
+ * What's safe to log from an error: its type and Postgres/API code. Messages are left out
+ * because drizzle puts the query's bound parameters (titles, summaries, URLs) in them.
+ */
+function safeError(err: unknown) {
+  const e = err as { name?: string; code?: string; cause?: { code?: string } }
+  return { errorName: e?.name ?? typeof err, errorCode: e?.code ?? e?.cause?.code }
+}
+
+/**
+ * Runs one link through the pipeline. Any failure ends the link as `failed`; the only error
+ * it rethrows is a cancelled job, so pg-boss retries it instead of marking it complete.
+ */
+export async function processLink(linkId: string, signal?: AbortSignal) {
   const [row] = await db
     .select({
       link: links,
@@ -120,21 +158,41 @@ export async function processLink(linkId: string) {
     return log.debug({ linkId, status: row.link.status }, 'skipped: done or already running')
   }
   const link = row.link
-  const ctx: Ctx = { log: log.child({ linkId, site: link.site }), reservedDay: null }
+  const ctx: Ctx = {
+    log: log.child({ linkId, site: link.site }),
+    linkId,
+    attempt: claim.attempts,
+    signal,
+    reservedDay: null,
+  }
   const started = Date.now()
   ctx.log.info({ attempt: claim.attempts }, 'processing link')
 
   try {
     if (claim.attempts > MAX_ATTEMPTS) {
-      await finish(ctx, link.id, 'failed', { failReason: GENERIC_FAILURE })
+      await finish(ctx, 'failed', { failReason: GENERIC_FAILURE })
     } else {
       await runPipeline(ctx, link, row)
     }
   } catch (err) {
-    ctx.log.error({ err }, 'pipeline crashed')
-    Sentry.captureException(err, { tags: { job: 'process-link' }, extra: { linkId: link.id } })
     if (ctx.reservedDay) await refund(link.userId, ctx.reservedDay).catch(() => {})
-    await finish(ctx, link.id, 'failed', { failReason: GENERIC_FAILURE }).catch(() => {})
+    if (err instanceof LostClaimError) {
+      ctx.log.info({ ms: Date.now() - started }, `stopped: ${err.message}`)
+      // A cancelled job is retried by pg-boss: hand the link back so the retry can claim it
+      // at once. A taken-over link belongs to the other run; leave it alone.
+      if (err.aborted) {
+        await db
+          .update(links)
+          .set({ status: 'queued' })
+          .where(owned(ctx))
+          .catch(() => {})
+        throw err
+      }
+      return
+    }
+    ctx.log.error(safeError(err), 'pipeline crashed')
+    Sentry.captureException(err, { tags: { job: 'process-link' }, extra: { linkId: link.id } })
+    await finish(ctx, 'failed', { failReason: GENERIC_FAILURE }).catch(() => {})
   }
 
   const { status = 'failed', reason, collection } = ctx.outcome ?? {}
@@ -170,7 +228,7 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
       'page read',
     )
   } else {
-    return finish(ctx, link.id, 'failed', { failReason: read.reason })
+    return finish(ctx, 'failed', { failReason: read.reason })
   }
   const page = read.page
   const metadata: LinkPatch = {
@@ -182,25 +240,27 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
     readMinutes: estimateReadMinutes(page.text),
   }
   if (block) {
-    return finish(ctx, link.id, 'no_ai', { ...metadata, aiSkipReason: block })
+    return finish(ctx, 'no_ai', { ...metadata, aiSkipReason: block })
   }
 
+  await assertOwned(ctx)
   const day = localDay(owner.timezone)
   if (!(await reserve(link.userId, day, effectiveDailyLimit(owner, settings)))) {
-    return finish(ctx, link.id, 'no_ai', { ...metadata, aiSkipReason: 'daily_limit' })
+    return finish(ctx, 'no_ai', { ...metadata, aiSkipReason: 'daily_limit' })
   }
   ctx.reservedDay = day
 
   const { list, corrections } = await collectionContext(link.userId)
   let result: Awaited<ReturnType<typeof sortLink>>
   try {
-    result = await sortLink(page, list, corrections)
+    result = await sortLink(page, list, corrections, ctx.signal)
   } catch (err) {
+    if (ctx.signal?.aborted) throw new LostClaimError(true)
     if (!(err instanceof AiCallError)) throw err
     await logCall(ctx, link, 'sort', err.usage, err.code)
     await refund(link.userId, day)
     ctx.reservedDay = null
-    return finish(ctx, link.id, 'failed', { ...metadata, failReason: AI_FAILURE })
+    return finish(ctx, 'failed', { ...metadata, failReason: AI_FAILURE })
   }
   // The call succeeded, so the sort is spent even if a later step fails.
   ctx.reservedDay = null
@@ -217,7 +277,7 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
   if (copy) ctx.log.debug({ key: copy.key, bytes: copy.bytes }, 'page copy stored')
   const readMinutes = out.readMinutes ?? metadata.readMinutes ?? null
 
-  await finish(ctx, link.id, confident ? 'done' : 'needs_review', {
+  await finish(ctx, confident ? 'done' : 'needs_review', {
     ...metadata,
     type,
     summary: out.summary,
@@ -254,7 +314,7 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
       .values({ urlHash: link.urlHash, ...cache })
       .onConflictDoUpdate({ target: urlSummaryCache.urlHash, set: cache })
   } catch (err) {
-    ctx.log.warn({ err }, 'shared cache write failed')
+    ctx.log.warn(safeError(err), 'shared cache write failed')
   }
 }
 
@@ -362,12 +422,14 @@ async function applyCached(
   let confidence: number | null = null
   let status: LinkStatus = 'done'
   if (!block) {
+    await assertOwned(ctx)
     const { list, corrections } = await collectionContext(link.userId)
     try {
       const { output, usage } = await pickCollection(
         { title: cached.title ?? link.url, summary: cached.summary, tags: cached.tags },
         list,
         corrections,
+        ctx.signal,
       )
       await logCall(ctx, link, 'collection_only', usage)
       const confident = output.confidence >= settings.reviewConfidenceThreshold
@@ -376,13 +438,14 @@ async function applyCached(
       confidence = output.confidence
       status = confident ? 'done' : 'needs_review'
     } catch (err) {
+      if (ctx.signal?.aborted) throw new LostClaimError(true)
       if (!(err instanceof AiCallError)) throw err
       // The summary is already there; the link just lands in Unsorted.
       await logCall(ctx, link, 'collection_only', err.usage, err.code)
     }
   }
 
-  await finish(ctx, link.id, status, {
+  await finish(ctx, status, {
     type: cached.type,
     site: cached.site,
     title: cached.title,
