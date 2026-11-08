@@ -17,7 +17,7 @@
     "db:studio": "pnpm --filter @keepmint/db studio"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.5",
     "turbo": "2.11.10",
     "typescript": "6.0.3"
   }
