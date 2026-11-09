@@ -1,4 +1,5 @@
 import 'server-only'
+import { QUEUES } from '@keepmint/core'
 import { PgBoss } from 'pg-boss'
 import { serverEnv } from './env'
 
@@ -20,6 +21,11 @@ export function getBoss() {
     })
     boss.on('error', (err) => console.error('[pg-boss]', err))
     await boss.start()
+    // A new queue doesn't exist until the updated worker has started once; create it with
+    // defaults so sends don't fail meanwhile (the worker then applies its own options).
+    for (const name of [QUEUES.processLink, QUEUES.fillCollection]) {
+      if (!(await boss.getQueue(name))) await boss.createQueue(name)
+    }
     return boss
   })().catch((err) => {
     globalForBoss.keepmintBoss = undefined

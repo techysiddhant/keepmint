@@ -2,13 +2,19 @@
 
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
+
+const subscribeToNothing = () => () => {}
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  // False on the server and during hydration, when the theme isn't known yet.
+  const mounted = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  )
   const dark = mounted && resolvedTheme === 'dark'
   return (
     <Button

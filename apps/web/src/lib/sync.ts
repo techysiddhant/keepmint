@@ -15,14 +15,16 @@ import {
 } from '@keepmint/core'
 import {
   type AppSettings,
+  aiCorrections,
   aiUsedToday,
+  collectionSuggestions,
   collections,
   effectiveDailyLimit,
   getAppSettings,
   links,
   user,
 } from '@keepmint/db'
-import { and, asc, eq, gt, inArray, isNull, lt, or, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm'
 import { fromDrizzle } from 'pg-boss'
 import type { z } from 'zod'
 import { getDb } from './db'
@@ -111,6 +113,12 @@ async function ownsLiveCollection(tx: Tx | Db, userId: string, id: string) {
   return Boolean(row)
 }
 
+/** For an UPDATE that files a link: a link waiting for AI review no longer is. */
+const answeredReview = {
+  status: sql`case when ${links.status} = 'needs_review' then 'done'::link_status else ${links.status} end`,
+  reviewedAt: sql`case when ${links.status} = 'needs_review' then now() else ${links.reviewedAt} end`,
+}
+
 async function applyChange(userId: string, c: Change): Promise<SyncResult> {
   const db = getDb()
   const ownLink = and(eq(links.id, c.id), eq(links.userId, userId), isNull(links.deletedAt))
@@ -132,14 +140,25 @@ async function applyChange(userId: string, c: Change): Promise<SyncResult> {
       }
 
     case 'link.update': {
-      const { collectionId, readLater, ...rest } = c.patch
+      const { collectionId, readLater, readLaterRank, readState, ...rest } = c.patch
       if (collectionId && !(await ownsLiveCollection(db, userId, collectionId))) return notFound
       const set = withoutUndefined({
         ...rest,
         collectionId,
+        // Added to Read later goes to the bottom of the queue; "Move to top" sends a rank.
         ...(readLater !== undefined
-          ? { readLater, readLaterRank: readLater ? Date.now() : null }
+          ? { readLater, readLaterRank: readLater ? (readLaterRank ?? Date.now()) : null }
+          : { readLaterRank }),
+        // Already-finished links keep their finish time (bulk "Mark read" mustn't reorder them).
+        ...(readState !== undefined
+          ? {
+              readState,
+              finishedAt: readState === 'done' ? sql`coalesce(${links.finishedAt}, now())` : null,
+            }
           : {}),
+        // Filing a link by hand answers the AI review for it (same statement, so the two
+        // can't get out of step).
+        ...(collectionId !== undefined ? answeredReview : {}),
       })
       // Nothing to change (drizzle refuses an empty SET): just report whether it exists.
       if (!Object.keys(set).length) {
@@ -174,6 +193,48 @@ async function applyChange(userId: string, c: Change): Promise<SyncResult> {
         return { id: c.id, ok: true }
       })
 
+    case 'link.restore':
+      try {
+        const rows = await db
+          .update(links)
+          .set({ deletedAt: null })
+          .where(and(eq(links.id, c.id), eq(links.userId, userId), isNotNull(links.deletedAt)))
+          .returning({ id: links.id })
+        return rows.length ? { id: c.id, ok: true } : notFound
+      } catch (err) {
+        // The same URL was saved again since the delete; keep that copy.
+        if (pgCode(err) === '23505') return { id: c.id, ok: false, error: 'already_saved' }
+        throw err
+      }
+
+    case 'link.review':
+      return db.transaction(async (tx) => {
+        const [link] = await tx
+          .select({ title: links.title, url: links.url, suggested: links.aiSuggestedCollection })
+          .from(links)
+          // Only links waiting for review; a stale panel can't mark a link mid-processing done.
+          .where(and(ownLink, eq(links.status, 'needs_review')))
+        if (!link) return notFound
+        if (c.collectionId && !(await ownsLiveCollection(tx, userId, c.collectionId))) {
+          return notFound
+        }
+        await tx
+          .update(links)
+          .set({ collectionId: c.collectionId, status: 'done', reviewedAt: new Date() })
+          .where(ownLink)
+        // The user's pick becomes an example in future prompts (5 newest are used).
+        if (c.collectionId) {
+          await tx.insert(aiCorrections).values({
+            userId,
+            linkId: c.id,
+            title: (link.title ?? link.url).slice(0, 300),
+            suggested: link.suggested,
+            chosenCollectionId: c.collectionId,
+          })
+        }
+        return { id: c.id, ok: true }
+      })
+
     case 'link.delete':
       // Soft delete: the row stays (sync needs it, and nothing is erased).
       await db
@@ -193,7 +254,23 @@ async function applyChange(userId: string, c: Change): Promise<SyncResult> {
           : { id: c.id, ok: false, error: 'not_allowed' }
       }
       try {
-        await db.insert(collections).values({ id: c.id, userId, name: c.name, color: c.color })
+        await db.transaction(async (tx) => {
+          await tx.insert(collections).values({
+            id: c.id,
+            userId,
+            name: c.name,
+            color: c.color,
+            description: c.description || null,
+          })
+          if (c.aiFill) {
+            const boss = await getBoss()
+            await boss.send(
+              QUEUES.fillCollection,
+              { collectionId: c.id },
+              { db: fromDrizzle(tx, sql) },
+            )
+          }
+        })
         return { id: c.id, ok: true }
       } catch (err) {
         if (pgCode(err) === '23505') return { id: c.id, ok: false, error: 'name_taken' }
@@ -238,6 +315,112 @@ async function applyChange(userId: string, c: Change): Promise<SyncResult> {
         }
         return { id: c.id, ok: true }
       })
+
+    case 'collection.restore':
+      try {
+        return await db.transaction(async (tx) => {
+          // Idempotent: a large undo arrives as several restores of the same collection,
+          // each carrying a slice of its links.
+          const rows = await tx
+            .update(collections)
+            .set({ deletedAt: null })
+            .where(and(eq(collections.id, c.id), eq(collections.userId, userId)))
+            .returning({ id: collections.id })
+          if (!rows.length) return notFound
+          // Only links still sitting in Unsorted go back; ones moved since stay put.
+          if (c.linkIds.length) {
+            await tx
+              .update(links)
+              .set({ collectionId: c.id })
+              .where(
+                and(
+                  eq(links.userId, userId),
+                  inArray(links.id, c.linkIds),
+                  isNull(links.collectionId),
+                  isNull(links.deletedAt),
+                ),
+              )
+          }
+          return { id: c.id, ok: true }
+        })
+      } catch (err) {
+        if (pgCode(err) === '23505') return { id: c.id, ok: false, error: 'name_taken' }
+        throw err
+      }
+
+    case 'suggestion.accept':
+      try {
+        return await db.transaction(async (tx) => {
+          const [sug] = await tx
+            .select()
+            .from(collectionSuggestions)
+            .where(
+              and(
+                eq(collectionSuggestions.id, c.id),
+                eq(collectionSuggestions.userId, userId),
+                eq(collectionSuggestions.status, 'open'),
+              ),
+            )
+          if (!sug) return notFound
+          // The user may have made a collection with this name since; then fill that one.
+          const [existing] = await tx
+            .select({ id: collections.id })
+            .from(collections)
+            .where(
+              and(
+                eq(collections.userId, userId),
+                isNull(collections.deletedAt),
+                sql`lower(${collections.name}) = lower(${sug.name})`,
+              ),
+            )
+          const targetId = existing?.id ?? c.collectionId
+          if (!existing) {
+            await tx.insert(collections).values({
+              id: c.collectionId,
+              userId,
+              name: sug.name,
+              color: c.color,
+              aiCreated: true,
+            })
+          }
+          if (sug.linkIds.length) {
+            await tx
+              .update(links)
+              .set({ collectionId: targetId, ...answeredReview })
+              .where(
+                and(
+                  eq(links.userId, userId),
+                  inArray(links.id, sug.linkIds),
+                  isNull(links.collectionId),
+                  isNull(links.deletedAt),
+                ),
+              )
+          }
+          await tx
+            .update(collectionSuggestions)
+            .set({ status: 'accepted', decidedAt: new Date() })
+            .where(eq(collectionSuggestions.id, c.id))
+          return { id: c.id, ok: true }
+        })
+      } catch (err) {
+        if (pgCode(err) === '23505') return { id: c.id, ok: false, error: 'name_taken' }
+        throw err
+      }
+
+    case 'suggestion.dismiss': {
+      const rows = await db
+        .update(collectionSuggestions)
+        .set({ status: 'dismissed', decidedAt: new Date() })
+        .where(
+          and(
+            eq(collectionSuggestions.id, c.id),
+            eq(collectionSuggestions.userId, userId),
+            eq(collectionSuggestions.status, 'open'),
+          ),
+        )
+        .returning({ id: collectionSuggestions.id })
+      return rows.length ? { id: c.id, ok: true } : notFound
+    }
   }
 }
 
@@ -267,7 +450,13 @@ function toSyncLink(r: typeof links.$inferSelect): SyncLink {
     aiSkipReason: r.aiSkipReason,
     aiSuggestedCollection: r.aiSuggestedCollection,
     readLater: r.readLater,
+    readLaterRank: r.readLaterRank,
+    readState: r.readState,
+    readProgress: r.readProgress,
+    finishedAt: iso(r.finishedAt),
     readMinutes: r.readMinutes,
+    hasPageCopy: Boolean(r.contentKey),
+    contentBytes: r.contentBytes,
     failReason: r.failReason,
     savedAt: r.savedAt.toISOString(),
     processedAt: iso(r.processedAt),
@@ -285,6 +474,8 @@ function toSyncCollection(r: typeof collections.$inferSelect): SyncCollection {
     description: r.description,
     pinned: r.pinned,
     aiCreated: r.aiCreated,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
     serverVersion: r.serverVersion,
     deletedAt: iso(r.deletedAt),
   }
@@ -332,7 +523,7 @@ export async function aiUsageFor(userId: string): Promise<AiUsage> {
  */
 export async function pullChanges(userId: string, since: number): Promise<SyncPullResponse> {
   const db = getDb()
-  const [linkRows, collectionRows, usage] = await Promise.all([
+  const [linkRows, collectionRows, usage, suggestions] = await Promise.all([
     db
       .select()
       .from(links)
@@ -346,6 +537,17 @@ export async function pullChanges(userId: string, since: number): Promise<SyncPu
       .orderBy(asc(collections.serverVersion))
       .limit(SYNC_PULL_LIMIT + 1),
     aiUsageFor(userId),
+    db
+      .select({
+        id: collectionSuggestions.id,
+        name: collectionSuggestions.name,
+        reason: collectionSuggestions.reason,
+        linkIds: collectionSuggestions.linkIds,
+      })
+      .from(collectionSuggestions)
+      .where(
+        and(eq(collectionSuggestions.userId, userId), eq(collectionSuggestions.status, 'open')),
+      ),
   ])
   const merged = [
     ...linkRows.map((r) => ({ v: r.serverVersion, link: r })),
@@ -360,5 +562,6 @@ export async function pullChanges(userId: string, since: number): Promise<SyncPu
     cursor: page.at(-1)?.v ?? since,
     hasMore: merged.length > SYNC_PULL_LIMIT,
     usage,
+    suggestions,
   }
 }

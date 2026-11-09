@@ -12,16 +12,22 @@ import {
   SparklesIcon,
 } from 'lucide-react'
 import Link from 'next/link'
-import { LINK_TYPE_DISPLAY } from '@/components/library/link-display'
+import {
+  isReading,
+  LINK_TYPE_DISPLAY,
+  needsRetry,
+  STUCK_REASON,
+} from '@/components/library/link-display'
 import { useLibrary } from '@/components/library/use-library'
 import { Badge, linkTypeBadge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { submitThenChange } from '@/lib/form'
+import { useNow } from '@/lib/use-now'
 import { cn } from '@/lib/utils'
 import { addLinkSchema } from '@/lib/validation/link'
-import { DoneDot, isBusy, needsRetry, STUCK_REASON, UsageBar } from './shared'
+import { DoneDot, UsageBar } from './shared'
 
 const SAMPLE_COLORS = ['bg-pink', 'bg-sky', 'bg-lilac'] as const
 
@@ -63,6 +69,7 @@ export function FirstRun({
   onLinkId: (id: string | null) => void
 }) {
   const { links, collections, usage, retryLink } = useLibrary()
+  const now = useNow()
   const link = linkId ? links[linkId] : undefined
   const hasLinks = Object.keys(links).length > 0
 
@@ -97,9 +104,9 @@ export function FirstRun({
             </div>
             {!link ? (
               <FirstLinkForm onSaved={onLinkId} />
-            ) : isBusy(link) ? (
+            ) : isReading(link, now) ? (
               <Steps status={link.status} site={link.site ?? 'link'} />
-            ) : needsRetry(link) ? (
+            ) : needsRetry(link, now) ? (
               <div className="flex flex-col gap-3">
                 <p className="rounded-[14px] border-2 border-border bg-fail-soft p-3.5 text-err-ink">
                   <strong>That one didn’t work.</strong> {link.failReason ?? STUCK_REASON}

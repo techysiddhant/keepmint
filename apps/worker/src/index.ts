@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node'
 import { createBoss } from './boss'
 import { pool } from './db'
 import { env } from './env'
+import { type FillCollectionData, handleFillCollection } from './jobs/fill-collection'
 import { handlePing, type PingData } from './jobs/ping'
 import { handleProcessLink, type ProcessLinkData } from './jobs/process-link'
 import { log } from './logger'
@@ -17,6 +18,8 @@ const QUEUE_OPTIONS = {
   [QUEUES.processLink]: { expireInSeconds: 300, retryLimit: 2, retryBackoff: true },
   // Phase 7 sets this properly; an import of ~1,000 links must not expire mid-run.
   [QUEUES.processImport]: { expireInSeconds: 3600, retryLimit: 1, retryBackoff: true },
+  // One AI call plus one UPDATE; retried once if the worker dies.
+  [QUEUES.fillCollection]: { expireInSeconds: 120, retryLimit: 1, retryBackoff: true },
   [QUEUES.ping]: { expireInSeconds: 60, retryLimit: 0 },
 } satisfies Record<(typeof QUEUES)[keyof typeof QUEUES], object>
 
@@ -34,6 +37,7 @@ async function main() {
   await boss.work<PingData>(QUEUES.ping, handlePing)
   // ~5 links at once stays well inside the API's rate limits.
   await boss.work<ProcessLinkData>(QUEUES.processLink, { localConcurrency: 5 }, handleProcessLink)
+  await boss.work<FillCollectionData>(QUEUES.fillCollection, handleFillCollection)
 
   log.info({ env: env.NODE_ENV, queues: Object.values(QUEUES) }, 'worker ready')
 }

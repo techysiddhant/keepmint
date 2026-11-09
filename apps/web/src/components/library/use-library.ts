@@ -7,16 +7,10 @@ import {
   type SyncCollection,
   type SyncLink,
   type SyncResult,
+  type SyncSuggestion,
 } from '@keepmint/core'
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useMemo,
-} from 'react'
+import { createContext, createElement, type ReactNode, useContext } from 'react'
 import { toast } from 'sonner'
 import { pullChanges, pushChanges } from '@/lib/api'
 
@@ -33,9 +27,16 @@ const FAST_POLL_FOR_MS = 60_000
  * previous one's links and sync cursor.
  */
 export const libraryQueryKey = (userId: string) => ['library', userId] as const
-type LibraryKey = ReturnType<typeof libraryQueryKey>
+export type LibraryKey = ReturnType<typeof libraryQueryKey>
 
 const LibraryUserContext = createContext<string | null>(null)
+
+/** The current user's library cache key (for actions outside useLibrary). */
+export function useLibraryKey(): LibraryKey {
+  const userId = useContext(LibraryUserContext)
+  if (!userId) throw new Error('useLibraryKey must be used inside <LibraryUserProvider>')
+  return libraryQueryKey(userId)
+}
 
 /** Tells useLibrary whose library it is (set once in the app layout). */
 export function LibraryUserProvider({ userId, children }: { userId: string; children: ReactNode }) {
@@ -46,14 +47,18 @@ export function LibraryUserProvider({ userId, children }: { userId: string; chil
  * The signed-in user's library as one cached object, built up by incremental pulls from
  * /api/sync. Phase 4 moves it into IndexedDB (Dexie) with an outbox; the API stays the same.
  */
-type LibraryData = {
+export type LibraryData = {
   links: Record<string, SyncLink>
   collections: Record<string, SyncCollection>
   usage: AiUsage | null
   /** Highest server_version seen; the next pull asks for anything newer. */
   cursor: number
+  /** Open "make a collection?" suggestions from the worker. */
+  suggestions: SyncSuggestion[]
   /** Last save or retry on this device: drives the faster polling. */
   lastLocalChangeAt: number
+  /** Poll fast until then: the worker is about to change things (e.g. "Let AI fill it"). */
+  expectChangesUntil: number
 }
 
 const EMPTY: LibraryData = {
@@ -61,13 +66,19 @@ const EMPTY: LibraryData = {
   collections: {},
   usage: null,
   cursor: 0,
+  suggestions: [],
   lastLocalChangeAt: 0,
+  expectChangesUntil: 0,
 }
 
 /** A saved link's id, and whether it was already in the library. */
 export type AddLinkResult = { id: string; duplicate: boolean }
 
-function updateLibrary(qc: QueryClient, key: LibraryKey, fn: (data: LibraryData) => LibraryData) {
+export function updateLibrary(
+  qc: QueryClient,
+  key: LibraryKey,
+  fn: (data: LibraryData) => LibraryData,
+) {
   qc.setQueryData<LibraryData>(key, (data) => fn(data ?? EMPTY))
 }
 
@@ -84,6 +95,7 @@ async function pullLibrary(qc: QueryClient, key: LibraryKey): Promise<LibraryDat
   const start = qc.getQueryData<LibraryData>(key) ?? EMPTY
   let cursor = start.cursor
   let usage = start.usage
+  let suggestions = start.suggestions
   const links: SyncLink[] = []
   const collections: SyncCollection[] = []
   let more = true
@@ -97,6 +109,7 @@ async function pullLibrary(qc: QueryClient, key: LibraryKey): Promise<LibraryDat
     links.push(...page.links)
     collections.push(...page.collections)
     usage = page.usage
+    suggestions = page.suggestions
   }
 
   // Merge into the cache as it is *now*, so a save made during the pull isn't lost.
@@ -116,14 +129,17 @@ async function pullLibrary(qc: QueryClient, key: LibraryKey): Promise<LibraryDat
     links: nextLinks,
     collections: nextCollections,
     usage,
+    suggestions,
     cursor: Math.max(latest.cursor, cursor),
   }
 }
 
 /** Poll only while the worker still has links to read (stuck ones won't change on their own). */
 function pollInterval(data: LibraryData | undefined): number | false {
-  const busy = Object.values(data?.links ?? {}).some((l) => isLinkBusy(l) && !isLinkStuck(l))
-  if (!data || !busy) return false
+  if (!data) return false
+  if (Date.now() < data.expectChangesUntil) return FAST_POLL_MS
+  const busy = Object.values(data.links).some((l) => isLinkBusy(l) && !isLinkStuck(l))
+  if (!busy) return false
   return Date.now() - data.lastLocalChangeAt < FAST_POLL_FOR_MS ? FAST_POLL_MS : POLL_MS
 }
 
@@ -149,7 +165,13 @@ function optimisticLink(v: { id: string; url: string; readLater: boolean; savedA
     aiSkipReason: null,
     aiSuggestedCollection: null,
     readLater: v.readLater,
+    readLaterRank: v.readLater ? Date.now() : null,
+    readState: 'unread',
+    readProgress: 0,
+    finishedAt: null,
     readMinutes: null,
+    hasPageCopy: false,
+    contentBytes: null,
     failReason: null,
     savedAt: v.savedAt,
     processedAt: null,
@@ -166,14 +188,14 @@ function optimisticLink(v: { id: string; url: string; readLater: boolean; savedA
 export function useLibrary() {
   const userId = useContext(LibraryUserContext)
   if (!userId) throw new Error('useLibrary must be used inside <LibraryUserProvider>')
-  const key = useMemo(() => libraryQueryKey(userId), [userId])
+  const key = libraryQueryKey(userId)
   const qc = useQueryClient()
   const query = useQuery({
     queryKey: key,
     queryFn: () => pullLibrary(qc, key),
     refetchInterval: (q) => pollInterval(q.state.data),
   })
-  const refresh = useCallback(() => qc.invalidateQueries({ queryKey: key }), [qc, key])
+  const refresh = () => qc.invalidateQueries({ queryKey: key })
 
   const create = useMutation({
     mutationFn: async (v: { id: string; url: string; readLater: boolean; savedAt: string }) => {
@@ -230,47 +252,45 @@ export function useLibrary() {
 
   const { mutateAsync: createAsync } = create
   /** Saves a link (shows its own toasts for errors and duplicates); null if refused. */
-  const addLink = useCallback(
-    async (url: string, { readLater = false } = {}): Promise<AddLinkResult | null> => {
-      const vars = { id: crypto.randomUUID(), url, readLater, savedAt: new Date().toISOString() }
-      let result: SyncResult
-      try {
-        result = await createAsync(vars)
-      } catch {
-        return null // onError already rolled back and told the user
-      }
-      if (!result?.ok) {
-        dropLink(qc, key, vars.id)
-        toast.error(
-          result?.error === 'invalid_url'
-            ? 'That doesn’t look like a link Keepmint can save.'
-            : 'Couldn’t save that link.',
-        )
-        return null
-      }
-      if (result.duplicateOf) {
-        dropLink(qc, key, vars.id)
-        toast('Already in your library')
-        return { id: result.duplicateOf, duplicate: true }
-      }
-      return { id: vars.id, duplicate: false }
-    },
-    [createAsync, qc, key],
-  )
+  const addLink = async (
+    url: string,
+    { readLater = false } = {},
+  ): Promise<AddLinkResult | null> => {
+    const vars = { id: crypto.randomUUID(), url, readLater, savedAt: new Date().toISOString() }
+    let result: SyncResult
+    try {
+      result = await createAsync(vars)
+    } catch {
+      return null // onError already rolled back and told the user
+    }
+    if (!result?.ok) {
+      dropLink(qc, key, vars.id)
+      toast.error(
+        result?.error === 'invalid_url'
+          ? 'That doesn’t look like a link Keepmint can save.'
+          : 'Couldn’t save that link.',
+      )
+      return null
+    }
+    if (result.duplicateOf) {
+      dropLink(qc, key, vars.id)
+      toast('Already in your library')
+      return { id: result.duplicateOf, duplicate: true }
+    }
+    return { id: vars.id, duplicate: false }
+  }
 
   const { mutateAsync: retryAsync } = retry
-  const retryLink = useCallback(
-    async (id: string) => {
-      await retryAsync(id).catch(() => {})
-    },
-    [retryAsync],
-  )
+  const retryLink = async (id: string) => {
+    await retryAsync(id).catch(() => {})
+  }
 
   const data = query.data ?? EMPTY
   return {
     links: data.links,
     collections: data.collections,
     usage: data.usage,
+    suggestions: data.suggestions,
     /** The first pull has finished (even if it failed). */
     loaded: !query.isPending,
     /** The last pull failed; what's shown may be incomplete. */

@@ -1,25 +1,18 @@
 'use client'
 
-import { type AiUsage, isLinkBusy, isLinkStuck, type SyncLink } from '@keepmint/core'
+import type { AiUsage, SyncLink } from '@keepmint/core'
 import { CheckIcon, LoaderCircleIcon } from 'lucide-react'
-import { LINK_TYPE_DISPLAY } from '@/components/library/link-display'
+import { isReading, LINK_TYPE_DISPLAY, needsRetry } from '@/components/library/link-display'
+import { useNow } from '@/lib/use-now'
 import { cn } from '@/lib/utils'
 
-/** Being read right now (not stuck). */
-export const isBusy = (l: SyncLink) => isLinkBusy(l) && !isLinkStuck(l)
-
-/** Needs the user: couldn't be read, or stuck waiting for a worker that never came. */
-export const needsRetry = (l: SyncLink) => l.status === 'failed' || isLinkStuck(l)
-
-export const STUCK_REASON = 'This is taking too long. Try again.'
-
 /** "Good afternoon" in the user's own time zone. */
-export function greeting(timeZone: string) {
-  let hour = new Date().getHours()
+export function greeting(timeZone: string, now: number) {
+  let hour = new Date(now).getHours()
   try {
     hour = Number(
       new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(
-        new Date(),
+        new Date(now),
       ),
     )
   } catch {}
@@ -38,8 +31,9 @@ export function firstName(name: string) {
 
 /** The coloured square with a link-type icon (or a spinner while it's being read). */
 export function LinkThumb({ link, className }: { link: SyncLink; className?: string }) {
+  const now = useNow()
   const display = LINK_TYPE_DISPLAY[link.type]
-  const busy = isBusy(link)
+  const busy = isReading(link, now)
   return (
     <span
       aria-hidden
@@ -47,7 +41,7 @@ export function LinkThumb({ link, className }: { link: SyncLink; className?: str
         'flex size-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-border text-sticker-ink',
         busy
           ? 'bg-primary text-primary-foreground'
-          : needsRetry(link)
+          : needsRetry(link, now)
             ? 'bg-fail-soft text-err-ink'
             : display.bg,
         className,

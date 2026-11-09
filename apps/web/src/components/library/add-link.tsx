@@ -6,10 +6,9 @@ import { CircleAlertIcon, LinkIcon, SparklesIcon } from 'lucide-react'
 import {
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
+  useEffectEvent,
   useState,
 } from 'react'
 import { toast } from 'sonner'
@@ -57,35 +56,35 @@ export function AddLinkProvider({ children }: { children: ReactNode }) {
   // Remounting the form on each open resets it.
   const [formKey, setFormKey] = useState(0)
 
-  const show = useCallback((url = '') => {
+  const show = (url = '') => {
     setPrefill(url)
     setFormKey((k) => k + 1)
     setOpen(true)
-  }, [])
+  }
 
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key.toLowerCase() !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return
+    if (isEditable(e.target) || document.querySelector('[role="dialog"]')) return
+    e.preventDefault()
+    show()
+  })
+  const onPaste = useEffectEvent((e: ClipboardEvent) => {
+    if (isEditable(e.target) || document.querySelector('[role="dialog"]')) return
+    const text = e.clipboardData?.getData('text/plain').trim() ?? ''
+    if (!text || /\s/.test(text) || !parseLinkInput(text)) return
+    e.preventDefault()
+    show(text)
+  })
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return
-      if (isEditable(e.target) || document.querySelector('[role="dialog"]')) return
-      e.preventDefault()
-      show()
-    }
-    const onPaste = (e: ClipboardEvent) => {
-      if (isEditable(e.target) || document.querySelector('[role="dialog"]')) return
-      const text = e.clipboardData?.getData('text/plain').trim() ?? ''
-      if (!text || /\s/.test(text) || !parseLinkInput(text)) return
-      e.preventDefault()
-      show(text)
-    }
     window.addEventListener('keydown', onKey)
     window.addEventListener('paste', onPaste)
     return () => {
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('paste', onPaste)
     }
-  }, [show])
+  }, [])
 
-  const api = useMemo(() => ({ open: show }), [show])
+  const api = { open: show }
   return (
     <AddLinkContext.Provider value={api}>
       {children}

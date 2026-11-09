@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   // Keep the dev badge off the sidebar's bottom-left Settings button.
   devIndicators: { position: 'bottom-right' },
   poweredByHeader: false,
+  reactCompiler: true,
   async headers() {
     return [
       {

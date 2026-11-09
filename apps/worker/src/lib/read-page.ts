@@ -91,6 +91,33 @@ function parseDocument(html: string) {
   return parseHTML(full).document as unknown as Document
 }
 
+const BLOCKS =
+  'p, div, section, article, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, figcaption, dd, dt'
+
+/**
+ * Text with the page's paragraph breaks kept: a blank line after each block element and a
+ * line break for each <br>. (`textContent` alone runs paragraphs together, e.g. on sites
+ * that separate them with <br><br>.)
+ */
+function blockText(root: Element) {
+  const doc = root.ownerDocument
+  // Newlines inside text are just HTML source formatting: make them spaces first.
+  const collapse = (node: Node) => {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3) child.nodeValue = (child.nodeValue ?? '').replace(/\s+/g, ' ')
+      else if (child.nodeName !== 'PRE') collapse(child)
+    }
+  }
+  collapse(root)
+  for (const br of root.querySelectorAll('br')) br.replaceWith(doc.createTextNode('\n'))
+  for (const el of root.querySelectorAll(BLOCKS)) el.append(doc.createTextNode('\n\n'))
+  return (root.textContent ?? '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 function extractReadable(html: string, url: string) {
   const document = parseDocument(html)
   const meta = readMeta(document, url)
@@ -107,11 +134,8 @@ function extractReadable(html: string, url: string) {
     // Readability can throw on unusual markup; the plain body text below is good enough.
   }
   for (const el of copy.querySelectorAll('script, style, noscript, nav, footer')) el.remove()
-  const raw = article?.textContent || copy.body?.textContent || ''
-  const text = raw
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  const root = article?.content ? parseDocument(article.content).body : copy.body
+  const text = root ? blockText(root) : ''
   return { document, meta, headings, text, articleTitle: clean(article?.title, 300) }
 }
 

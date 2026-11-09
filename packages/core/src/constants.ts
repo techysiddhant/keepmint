@@ -60,6 +60,7 @@ export type CollectionColor = (typeof COLLECTION_COLORS)[number]
 export const QUEUES = {
   processLink: 'process-link',
   processImport: 'process-import',
+  fillCollection: 'fill-collection',
   ping: 'ping',
 } as const
 

@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { type ReactNode, useEffect } from 'react'
 import { useAddLink } from '@/components/library/add-link'
+import { SearchBox } from '@/components/library/search-box'
 import { LogoMark } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -169,7 +170,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center gap-2.5 border-b-2 border-border bg-card px-4 py-3 tablet:px-6">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center gap-2.5 border-b-2 border-border bg-card px-4 py-3 tablet:flex-nowrap tablet:px-6">
           <Link
             href="/app"
             className="flex flex-1 items-center gap-2 font-display text-[19px] font-extrabold tablet:hidden"
@@ -177,6 +178,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: ReactN
             <LogoMark className="size-7.5" />
             keepmint
           </Link>
+          <SearchBox className="order-last w-full tablet:order-none tablet:w-auto tablet:max-w-160 tablet:flex-1" />
           <div className="hidden flex-1 tablet:block" />
           <ThemeToggle />
           <Link href="/app/settings" aria-label="Settings and profile" className="tablet:hidden">

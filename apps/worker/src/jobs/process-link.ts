@@ -10,9 +10,8 @@ import {
 } from '@keepmint/core'
 import {
   type AppSettings,
-  aiCalls,
   aiCorrections,
-  aiUsageDaily,
+  collectionSuggestions,
   collections,
   effectiveDailyLimit,
   getAppSettings,
@@ -33,6 +32,7 @@ import {
   pickCollection,
   sortLink,
 } from '../lib/ai'
+import { aiBlockReason, recordAiCall, refund, reserve, safeError } from '../lib/ai-budget'
 import { storePageCopy } from '../lib/r2'
 import { estimateReadMinutes, readPage } from '../lib/read-page'
 import { log } from '../logger'
@@ -103,15 +103,6 @@ async function finish(ctx: Ctx, status: LinkStatus, patch: LinkPatch = {}) {
     reason: patch.failReason ?? patch.aiSkipReason,
     collection: patch.aiSuggestedCollection,
   }
-}
-
-/**
- * What's safe to log from an error: its type and Postgres/API code. Messages are left out
- * because drizzle puts the query's bound parameters (titles, summaries, URLs) in them.
- */
-function safeError(err: unknown) {
-  const e = err as { name?: string; code?: string; cause?: { code?: string } }
-  return { errorName: e?.name ?? typeof err, errorCode: e?.code ?? e?.cause?.code }
 }
 
 /**
@@ -195,6 +186,10 @@ export async function processLink(linkId: string, signal?: AbortSignal) {
     await finish(ctx, 'failed', { failReason: GENERIC_FAILURE }).catch(() => {})
   }
 
+  if (ctx.outcome?.status === 'needs_review' && ctx.outcome.collection) {
+    await maybeSuggestCollection(ctx, link.userId, ctx.outcome.collection)
+  }
+
   const { status = 'failed', reason, collection } = ctx.outcome ?? {}
   const level = status === 'failed' ? 'warn' : 'info'
   ctx.log[level]({ status, reason, collection, ms: Date.now() - started }, `link ${status}`)
@@ -269,7 +264,6 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
   const out = result.output
   const type = page.type ?? out.type
   const confident = out.confidence >= settings.reviewConfidenceThreshold
-  const collectionId = await resolveCollection(link.userId, out.collection, confident)
   const copy =
     COPY_TYPES.includes(type) || page.text.length >= LONG_FORM_CHARS
       ? await storePageCopy(link.urlHash, page.text)
@@ -277,11 +271,15 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
   if (copy) ctx.log.debug({ key: copy.key, bytes: copy.bytes }, 'page copy stored')
   const readMinutes = out.readMinutes ?? metadata.readMinutes ?? null
 
-  await finish(ctx, confident ? 'done' : 'needs_review', {
+  const mine = await userChoices(link.id)
+  const collectionId =
+    mine.collectionId ?? (await resolveCollection(link.userId, out.collection, confident))
+
+  await finish(ctx, mine.collectionId || confident ? 'done' : 'needs_review', {
     ...metadata,
     type,
     summary: out.summary,
-    tags: out.tags,
+    tags: mergeTags(mine.tags, out.tags),
     collectionId,
     aiSuggestedCollection: out.collection,
     aiConfidence: out.confidence,
@@ -318,50 +316,6 @@ async function runPipeline(ctx: Ctx, link: LinkRow, owner: UserRow) {
   }
 }
 
-/** Global and per-user switches that stop AI before anything is spent. */
-async function aiBlockReason(owner: UserRow, settings: AppSettings): Promise<AiSkipReason | null> {
-  if (settings.aiKillSwitch) return 'kill_switch'
-  if (!owner.aiEnabled) return 'ai_disabled'
-  const startOfDay = new Date()
-  startOfDay.setUTCHours(0, 0, 0, 0)
-  const [spent] = await db
-    .select({ usd: sql<string>`coalesce(sum(${aiCalls.costUsd}), 0)` })
-    .from(aiCalls)
-    .where(gte(aiCalls.createdAt, startOfDay))
-  if (Number(spent?.usd ?? 0) >= settings.dailySpendCeilingUsd) return 'spend_ceiling'
-  return null
-}
-
-/** One AI sort, taken atomically so parallel jobs can't go past the limit. */
-async function reserve(userId: string, day: string, limit: number) {
-  // No allowance: don't touch the counter (an insert would record a sort that never ran).
-  if (limit <= 0) return false
-  const rows = await db
-    .insert(aiUsageDaily)
-    .values({ userId, day, count: 1 })
-    .onConflictDoUpdate({
-      target: [aiUsageDaily.userId, aiUsageDaily.day],
-      set: { count: sql`${aiUsageDaily.count} + 1` },
-      setWhere: sql`${aiUsageDaily.count} < ${limit}`,
-    })
-    .returning({ count: aiUsageDaily.count })
-  return rows.length > 0
-}
-
-/** Failed calls don't count: give the reserved sort back. */
-async function refund(userId: string, day: string) {
-  await db
-    .update(aiUsageDaily)
-    .set({ count: sql`${aiUsageDaily.count} - 1` })
-    .where(
-      and(
-        eq(aiUsageDaily.userId, userId),
-        eq(aiUsageDaily.day, day),
-        sql`${aiUsageDaily.count} > 0`,
-      ),
-    )
-}
-
 async function logCall(
   ctx: Ctx,
   link: LinkRow,
@@ -369,27 +323,7 @@ async function logCall(
   usage: AiUsageInfo,
   errorCode?: string,
 ) {
-  const fields = {
-    kind,
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-    costUsd: Number(usage.costUsd.toFixed(6)),
-    ms: usage.latencyMs,
-  }
-  if (errorCode) ctx.log.warn({ ...fields, code: errorCode }, 'AI call failed')
-  else ctx.log.info(fields, 'AI call')
-  await db.insert(aiCalls).values({
-    userId: link.userId,
-    linkId: link.id,
-    kind,
-    model: AI_MODEL,
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-    costUsd: usage.costUsd.toFixed(6),
-    status: errorCode ? 'error' : 'ok',
-    errorCode: errorCode ?? null,
-    latencyMs: usage.latencyMs,
-  })
+  await recordAiCall(ctx.log, { userId: link.userId, linkId: link.id, kind, usage, errorCode })
 }
 
 async function readCache(urlHash: string) {
@@ -421,7 +355,8 @@ async function applyCached(
   let suggested: string | null = null
   let confidence: number | null = null
   let status: LinkStatus = 'done'
-  if (!block) {
+  // Already filed by the user: there's nothing to ask the AI.
+  if (!block && !link.collectionId) {
     await assertOwned(ctx)
     const { list, corrections } = await collectionContext(link.userId)
     try {
@@ -445,23 +380,38 @@ async function applyCached(
     }
   }
 
-  await finish(ctx, status, {
+  const mine = await userChoices(link.id)
+  await finish(ctx, mine.collectionId ? 'done' : status, {
     type: cached.type,
     site: cached.site,
     title: cached.title,
     description: cached.description,
     imageUrl: cached.imageUrl,
     summary: cached.summary,
-    tags: cached.tags,
+    tags: mergeTags(mine.tags, cached.tags),
     readMinutes: cached.readMinutes,
     contentKey: cached.contentKey,
     contentBytes: cached.contentBytes,
-    collectionId,
+    collectionId: mine.collectionId ?? collectionId,
     aiSuggestedCollection: suggested,
     aiConfidence: confidence,
     aiSkipReason: null,
   })
 }
+
+/**
+ * What's on the link right now, read just before saving: the user may have filed or tagged
+ * it before a retry or while it was being read, and their choices win over the AI's.
+ */
+async function userChoices(linkId: string) {
+  const [row] = await db
+    .select({ collectionId: links.collectionId, tags: links.tags })
+    .from(links)
+    .where(eq(links.id, linkId))
+  return { collectionId: row?.collectionId ?? null, tags: row?.tags ?? [] }
+}
+
+const mergeTags = (mine: string[], ai: string[]) => [...new Set([...mine, ...ai])].slice(0, 20)
 
 /** The user's collections (names only, up to 30) and their 5 latest manual filings. */
 async function collectionContext(
@@ -478,11 +428,62 @@ async function collectionContext(
       .select({ title: aiCorrections.title, collection: collections.name })
       .from(aiCorrections)
       .innerJoin(collections, eq(collections.id, aiCorrections.chosenCollectionId))
-      .where(eq(aiCorrections.userId, userId))
+      // Collections are soft-deleted: a deleted one must not come back through the prompt.
+      .where(and(eq(aiCorrections.userId, userId), isNull(collections.deletedAt)))
       .orderBy(desc(aiCorrections.createdAt))
       .limit(5),
   ])
   return { list, corrections }
+}
+
+/** Unsorted links needed before Keepmint suggests making a collection for them. */
+const SUGGEST_AFTER = 3
+
+/**
+ * "Make a 'Keyboards & gear' collection?": when the AI has suggested the same new name for
+ * 3+ links still in Unsorted, open a suggestion (no extra AI call). A name the user already
+ * accepted or dismissed is never suggested again. Best effort: never fails the link.
+ */
+async function maybeSuggestCollection(ctx: Ctx, userId: string, name: string) {
+  try {
+    if (await findCollection(userId, name)) return
+    const [prior] = await db
+      .select({ id: collectionSuggestions.id })
+      .from(collectionSuggestions)
+      .where(
+        and(
+          eq(collectionSuggestions.userId, userId),
+          sql`lower(${collectionSuggestions.name}) = lower(${name})`,
+        ),
+      )
+    if (prior) return
+    const related = await db
+      .select({ id: links.id })
+      .from(links)
+      .where(
+        and(
+          eq(links.userId, userId),
+          isNull(links.collectionId),
+          isNull(links.deletedAt),
+          sql`lower(${links.aiSuggestedCollection}) = lower(${name})`,
+        ),
+      )
+      .limit(50)
+    if (related.length < SUGGEST_AFTER) return
+    await db
+      .insert(collectionSuggestions)
+      .values({
+        userId,
+        name,
+        reason: `${related.length} links in Unsorted look related.`,
+        linkIds: related.map((r) => r.id),
+      })
+      // Two jobs finishing at once: the open-name unique index keeps one.
+      .onConflictDoNothing()
+    ctx.log.info({ links: related.length }, 'collection suggested')
+  } catch (err) {
+    ctx.log.warn(safeError(err), 'collection suggestion failed')
+  }
 }
 
 async function findCollection(userId: string, name: string) {

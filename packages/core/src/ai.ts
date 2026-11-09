@@ -66,3 +66,12 @@ export function cleanLinkAiOutput(out: LinkAiOutput): CleanLinkAiOutput {
       out.readMinutes && out.readMinutes > 0 ? clamp(Math.round(out.readMinutes), 1, 600) : null,
   }
 }
+
+/** "Let AI fill it": a description for a new collection plus words to find its links by. */
+export const collectionFillSchema = z.object({
+  description: z.string().describe('One short sentence: what belongs in this collection'),
+  keywords: z
+    .array(z.string())
+    .describe('Up to 8 single lower-case words that links in this collection would contain'),
+})
+export type CollectionFill = z.infer<typeof collectionFillSchema>

@@ -9,7 +9,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "lint": "biome check .",
+    "lint": "biome check . && eslint apps/web/src",
     "format": "biome check --write .",
     "db:generate": "pnpm --filter @keepmint/db generate",
     "db:migrate": "pnpm --filter @keepmint/db migrate",
@@ -18,7 +18,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
+    "eslint": "9.39.5",
+    "eslint-plugin-react-hooks": "7.1.1",
     "turbo": "2.11.10",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
   }
 }

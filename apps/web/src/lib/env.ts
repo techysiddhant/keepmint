@@ -9,6 +9,12 @@ const serverSchema = z
     BETTER_AUTH_URL: z.string().url(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    // Read-only use: the reader loads stored page copies. Optional; without it the reader
+    // shows the summary and a link to the original.
+    R2_ACCOUNT_ID: z.string().optional(),
+    R2_ACCESS_KEY_ID: z.string().optional(),
+    R2_SECRET_ACCESS_KEY: z.string().optional(),
+    R2_BUCKET: z.string().optional(),
   })
   // In development, emails without a key are printed to the log. In production that would
   // put live verification and reset links in the server logs, so both are required.

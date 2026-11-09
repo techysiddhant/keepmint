@@ -3,30 +3,21 @@
 import { localDay, type SyncLink } from '@keepmint/core'
 import { ClockIcon, RotateCwIcon, SparklesIcon, TriangleAlertIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
-import { timeAgo } from '@/components/library/link-display'
+import { useState } from 'react'
+import { isReading, needsRetry, STUCK_REASON, timeAgo } from '@/components/library/link-display'
 import { useLibrary } from '@/components/library/use-library'
 import { Button } from '@/components/ui/button'
+import { useNow } from '@/lib/use-now'
 import { cn } from '@/lib/utils'
 import { FirstRun } from './first-run'
-import {
-  firstName,
-  greeting,
-  isBusy,
-  LinkThumb,
-  needsRetry,
-  STUCK_REASON,
-  UsageBar,
-} from './shared'
+import { ReviewDialog } from './review-dialog'
+import { firstName, greeting, LinkThumb, UsageBar } from './shared'
 
 const DAY = 86_400_000
 
 export function DashboardView({ name, timezone }: { name: string; timezone: string }) {
   const library = useLibrary()
-  const links = useMemo(
-    () => Object.values(library.links).sort((a, b) => b.savedAt.localeCompare(a.savedAt)),
-    [library.links],
-  )
+  const links = Object.values(library.links).sort((a, b) => b.savedAt.localeCompare(a.savedAt))
   // Once a link is saved from the welcome screen, stay there for the rest of the visit,
   // including after "Save another" / "Try another link" clear the link id.
   const [welcomeSession, setWelcomeSession] = useState(false)
@@ -57,7 +48,8 @@ function Dashboard({
   links: SyncLink[]
 }) {
   const { usage, collections, retryLink } = useLibrary()
-  const now = Date.now()
+  const [reviewing, setReviewing] = useState(false)
+  const now = useNow()
   const age = (l: SyncLink) => now - new Date(l.savedAt).getTime()
   const thisWeek = links.filter((l) => age(l) < 7 * DAY).length
   const lastWeek = links.filter((l) => age(l) >= 7 * DAY && age(l) < 14 * DAY).length
@@ -77,8 +69,8 @@ function Dashboard({
   })
   const sparkMax = Math.max(1, ...spark)
   const readLater = links.filter((l) => l.readLater).length
-  const waiting = links.filter(isBusy)
-  const failed = links.filter(needsRetry)
+  const waiting = links.filter((l) => isReading(l, now))
+  const failed = links.filter((l) => needsRetry(l, now))
   const review = links.filter((l) => l.status === 'needs_review').length
   const collectionCount = Object.keys(collections).length
   const diff = thisWeek - lastWeek
@@ -87,7 +79,7 @@ function Dashboard({
     <div className="mx-auto flex max-w-290 flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-[clamp(26px,4vw,34px)] leading-tight font-extrabold tracking-tight">
-          {greeting(timezone)}
+          {greeting(timezone, now)}
           {name ? `, ${name}` : ''}
         </h1>
         <p className="text-muted-foreground">
@@ -95,9 +87,13 @@ function Dashboard({
           {review > 0 && (
             <>
               {' · '}
-              <strong className="text-foreground">
+              <button
+                type="button"
+                onClick={() => setReviewing(true)}
+                className="font-bold text-foreground underline underline-offset-3"
+              >
                 {review} {review === 1 ? 'link needs' : 'links need'} a quick check
-              </strong>
+              </button>
             </>
           )}
         </p>
@@ -219,7 +215,7 @@ function Dashboard({
                   <LinkThumb link={l} className="size-6 rounded-lg" />
                   <span className="min-w-0 flex-1 truncate font-semibold">{l.title ?? l.url}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {timeAgo(l.savedAt)}
+                    {timeAgo(l.savedAt, now)}
                   </span>
                 </div>
               ))}
@@ -261,15 +257,17 @@ function Dashboard({
           </ul>
         </section>
       </div>
+      <ReviewDialog open={reviewing} onOpenChange={setReviewing} />
     </div>
   )
 }
 
 function ActivityRow({ link, collection }: { link: SyncLink; collection?: string }) {
+  const now = useNow()
   const title = link.title ?? link.site ?? link.url
-  const [verb, detail] = isBusy(link)
+  const [verb, detail] = isReading(link, now)
     ? ['Reading', 'Summarising and filing…']
-    : needsRetry(link)
+    : needsRetry(link, now)
       ? ['Couldn’t read', link.failReason ?? STUCK_REASON]
       : link.status === 'needs_review'
         ? ['Check', `AI suggests “${link.aiSuggestedCollection ?? 'Unsorted'}”`]
@@ -285,7 +283,7 @@ function ActivityRow({ link, collection }: { link: SyncLink; collection?: string
         </span>
         <span className="truncate text-[13px] text-muted-foreground">{detail}</span>
       </div>
-      <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(link.savedAt)}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">{timeAgo(link.savedAt, now)}</span>
     </li>
   )
 }
