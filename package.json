@@ -17,7 +17,7 @@
     "db:studio": "pnpm --filter @keepmint/db studio"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.4",
+    "@biomejs/biome": "2.6.5",
     "eslint": "9.39.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "turbo": "2.11.10",
